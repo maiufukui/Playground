@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lemon - Meal Planning</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#f6f7f4', 100: '#e8ebe3', 200: '#d4dac9', 300: '#b5c0a5', 400: '#94a47f', 500: '#778a62', 600: '#5d6e4d' },
+            warm: { 50: '#fefcf9', 100: '#fdf8f0', 200: '#faf0df', 300: '#f5e4c8' },
+            lemon: { 50: '#fefce8', 100: '#fef9c3', 400: '#fcd34d', 500: '#fbbf24' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fff; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-up { animation: slide-up 0.3s ease-out; }
+    @keyframes check-pop { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .check-pop { animation: check-pop 0.25s ease-out; }
+    @keyframes heart-pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+    .heart-pop { animation: heart-pop 0.3s ease-out; }
+    .detail-scroll::-webkit-scrollbar { display: none; }
+    .detail-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Icons
+    const Icons = {
+      X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+      Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+      Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>,
+      Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>,
+      Minus: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" x2="19" y1="12" y2="12"/></svg>,
+      ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>,
+      ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>,
+      Utensils: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>,
+      PlusCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>,
+      Camera: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>,
+      Edit: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+      Share: ({size}) => <svg xmlns="http://www.w3.org/2000/svg" width={size||18} height={size||18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>,
+      ShoppingCart: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+      Save: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+      List: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>,
+      ThumbUp: ({filled}) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>,
+      ThumbDown: ({filled}) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z"/></svg>,
+      Bookmark: ({filled}) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
+      Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+      Heart: ({filled}) => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={filled ? '#ef4444' : 'none'} stroke={filled ? '#ef4444' : 'currentColor'} strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>,
+      Leaf: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>,
+    };
+
+    // Meal type constants
+    const MEAL_TYPES = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snack'];
+    const MEAL_TYPE_ICONS = { Breakfast: '\u2600\ufe0f', Lunch: '\ud83c\udf5d', Dinner: '\ud83c\udf19', Snack: '\ud83c\udf4e' };
+
+    // All meals organized by category with ingredients, instructions, benefits, and mealTypes
+    const MEAL_DATA = {
+      'high-protein': {
+        name: 'High Protein',
+        color: 'text-red-500',
+        meals: [
+          {
+            id: 'hp1', name: 'Grilled Chicken Bowl', calories: 450, protein: 42, carbs: 35, fat: 12, prepTime: 20, fiber: 6, mealTypes: ['lunch', 'dinner'],
+            thumb: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=80',
+            ingredients: [
+              { name: 'Chicken breast', amount: '6 oz', category: 'Protein' },
+              { name: 'Brown rice', amount: '1 cup', category: 'Grains' },
+              { name: 'Broccoli', amount: '1 cup', category: 'Vegetables' },
+              { name: 'Olive oil', amount: '1 tbsp', category: 'Oils' },
+              { name: 'Garlic', amount: '2 cloves', category: 'Produce' },
+            ],
+            instructions: [
+              'Season chicken breast with salt, pepper, and minced garlic.',
+              'Grill chicken on medium-high heat for 6-7 minutes per side until internal temperature reaches 165\u00b0F.',
+              'Cook brown rice according to package directions.',
+              'Steam broccoli for 3-4 minutes until bright green and tender-crisp.',
+              'Slice chicken and arrange over rice with broccoli. Drizzle with olive oil.',
+            ],
+            benefits: [
+              'Excellent source of lean protein for muscle recovery and growth.',
+              'Brown rice provides sustained energy with complex carbohydrates and B vitamins.',
+              'Broccoli is packed with vitamin C, vitamin K, and cancer-fighting sulforaphane.',
+            ],
+          },
+          {
+            id: 'hp2', name: 'Salmon & Quinoa', calories: 520, protein: 38, carbs: 42, fat: 18, prepTime: 25, fiber: 5, mealTypes: ['lunch', 'dinner'],
+            thumb: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&q=80',
+            ingredients: [
+              { name: 'Salmon fillet', amount: '5 oz', category: 'Protein' },
+              { name: 'Quinoa', amount: '1 cup', category: 'Grains' },
+              { name: 'Asparagus', amount: '6 spears', category: 'Vegetables' },
+              { name: 'Lemon', amount: '1', category: 'Produce' },
+              { name: 'Dill', amount: '2 tbsp', category: 'Herbs' },
+            ],
+            instructions: [
+              'Rinse quinoa and cook with 2 cups water for 15 minutes until fluffy.',
+              'Season salmon with lemon zest, dill, salt, and pepper.',
+              'Pan-sear salmon skin-side down for 4 minutes, flip and cook 3 more minutes.',
+              'Trim asparagus and roast at 400\u00b0F for 8-10 minutes with olive oil.',
+              'Plate quinoa, top with salmon and asparagus. Squeeze fresh lemon over everything.',
+            ],
+            benefits: [
+              'Salmon is one of the best sources of omega-3 fatty acids for heart and brain health.',
+              'Quinoa is a complete protein containing all 9 essential amino acids.',
+              'Asparagus is rich in folate and supports healthy digestion.',
+            ],
+          },
+          {
+            id: 'hp3', name: 'Greek Yogurt Parfait', calories: 320, protein: 24, carbs: 38, fat: 8, prepTime: 5, fiber: 4, mealTypes: ['breakfast', 'snack'],
+            thumb: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=300&q=80',
+            ingredients: [
+              { name: 'Greek yogurt', amount: '1.5 cups', category: 'Dairy' },
+              { name: 'Granola', amount: '1/2 cup', category: 'Grains' },
+              { name: 'Mixed berries', amount: '1 cup', category: 'Fruit' },
+              { name: 'Honey', amount: '1 tbsp', category: 'Sweeteners' },
+            ],
+            instructions: [
+              'Spoon half the Greek yogurt into a glass or bowl.',
+              'Add a layer of mixed berries and a sprinkle of granola.',
+              'Repeat with remaining yogurt, berries, and granola.',
+              'Drizzle honey on top and serve immediately.',
+            ],
+            benefits: [
+              'Greek yogurt provides probiotics for gut health and twice the protein of regular yogurt.',
+              'Berries are loaded with antioxidants that help fight inflammation.',
+              'A balanced mix of protein, carbs, and healthy fats for sustained energy.',
+            ],
+          },
+          {
+            id: 'hp4', name: 'Turkey Lettuce Wraps', calories: 280, protein: 32, carbs: 12, fat: 14, prepTime: 15, fiber: 2, mealTypes: ['lunch', 'snack'],
+            thumb: 'https://images.unsplash.com/photo-1529059356987-e022f10d3c22?w=300&q=80',
+            ingredients: [
+              { name: 'Ground turkey', amount: '6 oz', category: 'Protein' },
+              { name: 'Butter lettuce', amount: '6 leaves', category: 'Vegetables' },
+              { name: 'Water chestnuts', amount: '1/4 cup', category: 'Vegetables' },
+              { name: 'Soy sauce', amount: '2 tbsp', category: 'Condiments' },
+              { name: 'Ginger', amount: '1 tsp', category: 'Produce' },
+            ],
+            instructions: [
+              'Brown ground turkey in a skillet over medium-high heat, breaking into crumbles.',
+              'Add minced ginger and diced water chestnuts, cook 2 minutes.',
+              'Stir in soy sauce and cook until sauce thickens slightly.',
+              'Wash and separate butter lettuce leaves into cups.',
+              'Spoon turkey mixture into lettuce cups and serve.',
+            ],
+            benefits: [
+              'Turkey is a lean protein source that\u2019s lower in saturated fat than beef.',
+              'Lettuce wraps cut carbs significantly compared to traditional wraps or bread.',
+              'Ginger aids digestion and has powerful anti-inflammatory properties.',
+            ],
+          },
+        ]
+      },
+      'low-calorie': {
+        name: 'Low Calorie',
+        color: 'text-green-500',
+        meals: [
+          {
+            id: 'lc1', name: 'Buddha Bowl', calories: 350, protein: 15, carbs: 45, fat: 12, prepTime: 15, fiber: 10, mealTypes: ['lunch', 'dinner'],
+            thumb: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&q=80',
+            ingredients: [
+              { name: 'Chickpeas', amount: '1/2 cup', category: 'Protein' },
+              { name: 'Sweet potato', amount: '1 medium', category: 'Vegetables' },
+              { name: 'Kale', amount: '2 cups', category: 'Vegetables' },
+              { name: 'Tahini', amount: '2 tbsp', category: 'Condiments' },
+              { name: 'Red cabbage', amount: '1/2 cup', category: 'Vegetables' },
+            ],
+            instructions: [
+              'Cube sweet potato and roast at 425\u00b0F for 20 minutes until caramelized.',
+              'Drain and rinse chickpeas, toss with cumin and roast for 15 minutes until crispy.',
+              'Massage kale with a drizzle of olive oil until tender.',
+              'Thinly slice red cabbage and toss with lemon juice.',
+              'Arrange everything in a bowl and drizzle generously with tahini.',
+            ],
+            benefits: [
+              'Chickpeas provide plant-based protein and are high in fiber for satiety.',
+              'Sweet potatoes are rich in beta-carotene, which supports eye health and immunity.',
+              'Kale is a nutrient powerhouse with vitamins A, C, K, and calcium.',
+            ],
+          },
+          {
+            id: 'lc2', name: 'Zucchini Noodles', calories: 180, protein: 8, carbs: 18, fat: 8, prepTime: 20, fiber: 4, mealTypes: ['lunch', 'dinner'],
+            thumb: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&q=80',
+            ingredients: [
+              { name: 'Zucchini', amount: '2 medium', category: 'Vegetables' },
+              { name: 'Cherry tomatoes', amount: '1 cup', category: 'Vegetables' },
+              { name: 'Parmesan', amount: '2 tbsp', category: 'Dairy' },
+              { name: 'Basil', amount: '1/4 cup', category: 'Herbs' },
+              { name: 'Pine nuts', amount: '2 tbsp', category: 'Nuts' },
+            ],
+            instructions: [
+              'Spiralize zucchini into noodle-shaped strands.',
+              'Halve cherry tomatoes and saut\u00e9 in olive oil until softened.',
+              'Add zucchini noodles and toss for 2 minutes (don\u2019t overcook).',
+              'Toast pine nuts in a dry pan until golden.',
+              'Top with fresh basil, parmesan, and toasted pine nuts.',
+            ],
+            benefits: [
+              'Zucchini noodles are an ultra-low-calorie alternative to pasta with only 20 cal per cup.',
+              'Tomatoes provide lycopene, a powerful antioxidant linked to reduced heart disease risk.',
+              'Pine nuts contain pinolenic acid which may help suppress appetite naturally.',
+            ],
+          },
+          {
+            id: 'lc3', name: 'Green Smoothie', calories: 150, protein: 5, carbs: 28, fat: 3, prepTime: 5, fiber: 6, mealTypes: ['breakfast', 'snack'],
+            thumb: 'https://images.unsplash.com/photo-1502741224143-90386d7f8c82?w=300&q=80',
+            ingredients: [
+              { name: 'Spinach', amount: '2 cups', category: 'Vegetables' },
+              { name: 'Banana', amount: '1', category: 'Fruit' },
+              { name: 'Almond milk', amount: '1 cup', category: 'Dairy' },
+              { name: 'Chia seeds', amount: '1 tbsp', category: 'Seeds' },
+            ],
+            instructions: [
+              'Add almond milk to the blender first for a smooth base.',
+              'Add spinach and blend for 30 seconds until broken down.',
+              'Add frozen banana chunks and chia seeds.',
+              'Blend on high for 60 seconds until completely smooth. Add ice if desired.',
+            ],
+            benefits: [
+              'Spinach is rich in iron, folate, and magnesium without adding many calories.',
+              'Chia seeds are packed with omega-3s and expand in liquid to keep you fuller longer.',
+              'An easy way to get 2+ servings of vegetables in a single drink.',
+            ],
+          },
+        ]
+      },
+      'mediterranean': {
+        name: 'Mediterranean',
+        color: 'text-amber-500',
+        meals: [
+          {
+            id: 'md1', name: 'Greek Salad', calories: 280, protein: 10, carbs: 18, fat: 20, prepTime: 10, fiber: 3, mealTypes: ['lunch'],
+            thumb: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&q=80',
+            ingredients: [
+              { name: 'Cucumber', amount: '1 large', category: 'Vegetables' },
+              { name: 'Tomatoes', amount: '2 medium', category: 'Vegetables' },
+              { name: 'Feta cheese', amount: '3 oz', category: 'Dairy' },
+              { name: 'Kalamata olives', amount: '1/4 cup', category: 'Vegetables' },
+              { name: 'Red onion', amount: '1/4', category: 'Vegetables' },
+              { name: 'Olive oil', amount: '2 tbsp', category: 'Oils' },
+            ],
+            instructions: [
+              'Dice cucumber and tomatoes into bite-sized chunks.',
+              'Thinly slice red onion into half-moons.',
+              'Combine vegetables in a large bowl with kalamata olives.',
+              'Crumble feta cheese over the top.',
+              'Dress with olive oil, red wine vinegar, dried oregano, salt, and pepper.',
+            ],
+            benefits: [
+              'Olive oil is rich in monounsaturated fats that support cardiovascular health.',
+              'Feta provides calcium and probiotics from the fermentation process.',
+              'The Mediterranean diet is consistently ranked as the healthiest diet pattern worldwide.',
+            ],
+          },
+          {
+            id: 'md2', name: 'Hummus & Pita', calories: 320, protein: 12, carbs: 42, fat: 14, prepTime: 5, fiber: 7, mealTypes: ['lunch', 'snack'],
+            thumb: 'https://images.unsplash.com/photo-1481931098730-318b6f776db0?w=300&q=80',
+            ingredients: [
+              { name: 'Hummus', amount: '1/2 cup', category: 'Dips' },
+              { name: 'Pita bread', amount: '2', category: 'Grains' },
+              { name: 'Carrots', amount: '1 cup', category: 'Vegetables' },
+              { name: 'Bell peppers', amount: '1', category: 'Vegetables' },
+            ],
+            instructions: [
+              'Warm pita bread in the oven at 350\u00b0F for 2-3 minutes or in a dry skillet.',
+              'Cut pita into triangles.',
+              'Slice carrots into sticks and bell peppers into strips.',
+              'Scoop hummus into a bowl, drizzle with olive oil and a pinch of paprika.',
+              'Arrange veggies and pita around the hummus for dipping.',
+            ],
+            benefits: [
+              'Hummus (made from chickpeas) is high in plant protein and fiber for lasting fullness.',
+              'Carrots are an excellent source of beta-carotene for skin and eye health.',
+              'A balanced snack with healthy fats, protein, and complex carbs.',
+            ],
+          },
+          {
+            id: 'md3', name: 'Shakshuka', calories: 350, protein: 18, carbs: 22, fat: 22, prepTime: 20, fiber: 5, mealTypes: ['breakfast', 'dinner'],
+            thumb: 'https://images.unsplash.com/photo-1590412200988-a436970781fa?w=300&q=80',
+            ingredients: [
+              { name: 'Eggs', amount: '3', category: 'Protein' },
+              { name: 'Canned tomatoes', amount: '1 can', category: 'Canned' },
+              { name: 'Bell pepper', amount: '1', category: 'Vegetables' },
+              { name: 'Onion', amount: '1', category: 'Vegetables' },
+              { name: 'Cumin', amount: '1 tsp', category: 'Spices' },
+              { name: 'Paprika', amount: '1 tsp', category: 'Spices' },
+            ],
+            instructions: [
+              'Dice onion and bell pepper. Saut\u00e9 in olive oil until softened, about 5 minutes.',
+              'Add cumin and paprika, stir for 30 seconds until fragrant.',
+              'Pour in canned tomatoes, break up with a spoon, and simmer 10 minutes.',
+              'Make 3 wells in the sauce and crack an egg into each.',
+              'Cover and cook 5-7 minutes until egg whites are set but yolks are still runny.',
+            ],
+            benefits: [
+              'Eggs are one of the most nutrient-dense foods, providing choline for brain health.',
+              'Tomato-based sauces are rich in lycopene, better absorbed when cooked with fat.',
+              'Spices like cumin and paprika have anti-inflammatory and metabolism-boosting properties.',
+            ],
+          },
+        ]
+      },
+      'quick-easy': {
+        name: 'Quick & Easy',
+        color: 'text-purple-500',
+        meals: [
+          {
+            id: 'qe1', name: 'Overnight Oats', calories: 350, protein: 14, carbs: 52, fat: 10, prepTime: 5, fiber: 7, mealTypes: ['breakfast'],
+            thumb: 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=300&q=80',
+            ingredients: [
+              { name: 'Rolled oats', amount: '1/2 cup', category: 'Grains' },
+              { name: 'Almond milk', amount: '1/2 cup', category: 'Dairy' },
+              { name: 'Greek yogurt', amount: '1/4 cup', category: 'Dairy' },
+              { name: 'Maple syrup', amount: '1 tbsp', category: 'Sweeteners' },
+              { name: 'Blueberries', amount: '1/2 cup', category: 'Fruit' },
+            ],
+            instructions: [
+              'Combine oats, almond milk, and Greek yogurt in a jar or container.',
+              'Stir in maple syrup until well mixed.',
+              'Top with blueberries (or push them into the mixture).',
+              'Seal and refrigerate overnight (at least 6 hours).',
+              'Enjoy cold in the morning \u2014 no cooking required!',
+            ],
+            benefits: [
+              'Oats contain beta-glucan fiber which helps lower cholesterol levels.',
+              'Blueberries are one of the highest-antioxidant fruits available.',
+              'Prep once, eat anytime \u2014 perfect for busy mornings with zero cooking.',
+            ],
+          },
+          {
+            id: 'qe2', name: 'Caprese Sandwich', calories: 420, protein: 18, carbs: 38, fat: 22, prepTime: 10, fiber: 2, mealTypes: ['lunch'],
+            thumb: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=300&q=80',
+            ingredients: [
+              { name: 'Ciabatta bread', amount: '1 roll', category: 'Grains' },
+              { name: 'Fresh mozzarella', amount: '4 oz', category: 'Dairy' },
+              { name: 'Tomato', amount: '1 large', category: 'Vegetables' },
+              { name: 'Basil leaves', amount: '6', category: 'Herbs' },
+              { name: 'Balsamic glaze', amount: '1 tbsp', category: 'Condiments' },
+            ],
+            instructions: [
+              'Slice ciabatta roll in half horizontally.',
+              'Slice fresh mozzarella and tomato into even rounds.',
+              'Layer mozzarella, tomato slices, and fresh basil on the bottom half.',
+              'Drizzle balsamic glaze over the layers.',
+              'Close with the top half, press gently, and slice in half to serve.',
+            ],
+            benefits: [
+              'Fresh mozzarella provides calcium and protein with less sodium than aged cheeses.',
+              'Tomatoes offer vitamin C and potassium for immune and heart health.',
+              'Basil contains essential oils with antibacterial and anti-inflammatory properties.',
+            ],
+          },
+        ]
+      },
+    };
+
+    // Favorite meals (curated)
+    const FAVORITES = [
+      MEAL_DATA['high-protein'].meals[0],
+      MEAL_DATA['mediterranean'].meals[2],
+      MEAL_DATA['low-calorie'].meals[0],
+      MEAL_DATA['quick-easy'].meals[0],
+    ];
+
+    // Suggested for You — Lemon curates a daily plan based on user preferences/goals
+    const SUGGESTED_PLANS = [
+      {
+        id: 'sug1',
+        title: 'Balanced Day',
+        subtitle: 'High protein \u2022 Under 1,800 cal',
+        description: 'A full day of meals optimized for balanced macros and sustained energy.',
+        gradient: 'from-sage-500 to-sage-300',
+        totalCal: 1330, totalProtein: 79, totalCarbs: 147, totalFat: 42,
+        meals: [
+          { type: 'Breakfast', meal: MEAL_DATA['quick-easy'].meals[0] },      // Overnight Oats
+          { type: 'Lunch', meal: MEAL_DATA['high-protein'].meals[0] },        // Grilled Chicken Bowl
+          { type: 'Snack', meal: MEAL_DATA['low-calorie'].meals[2] },         // Green Smoothie
+          { type: 'Dinner', meal: MEAL_DATA['high-protein'].meals[1] },       // Salmon & Quinoa
+        ]
+      },
+      {
+        id: 'sug2',
+        title: 'Light & Fresh',
+        subtitle: 'Mediterranean \u2022 Under 1,200 cal',
+        description: 'A lighter day with Mediterranean-inspired meals that keep you satisfied.',
+        gradient: 'from-amber-400 to-amber-200',
+        totalCal: 1160, totalProtein: 51, totalCarbs: 131, totalFat: 47,
+        meals: [
+          { type: 'Breakfast', meal: MEAL_DATA['mediterranean'].meals[2] },   // Shakshuka
+          { type: 'Lunch', meal: MEAL_DATA['mediterranean'].meals[0] },       // Greek Salad
+          { type: 'Snack', meal: MEAL_DATA['mediterranean'].meals[1] },       // Hummus & Pita
+          { type: 'Dinner', meal: MEAL_DATA['low-calorie'].meals[0] },        // Buddha Bowl
+        ]
+      },
+      {
+        id: 'sug3',
+        title: 'Quick Prep Day',
+        subtitle: 'Under 15 min each \u2022 Easy cleanup',
+        description: 'Every meal takes 15 minutes or less. Perfect for busy days.',
+        gradient: 'from-purple-400 to-purple-200',
+        totalCal: 1220, totalProtein: 55, totalCarbs: 148, totalFat: 43,
+        meals: [
+          { type: 'Breakfast', meal: MEAL_DATA['high-protein'].meals[2] },    // Greek Yogurt Parfait
+          { type: 'Lunch', meal: MEAL_DATA['high-protein'].meals[3] },        // Turkey Lettuce Wraps
+          { type: 'Snack', meal: MEAL_DATA['mediterranean'].meals[1] },       // Hummus & Pita
+          { type: 'Dinner', meal: MEAL_DATA['quick-easy'].meals[1] },         // Caprese Sandwich
+        ]
+      },
+    ];
+
+    // Helper: filter meals by type
+    function filterByType(meals, activeFilter) {
+      if (activeFilter === 'All') return meals;
+      return meals.filter(m => (m.mealTypes || []).includes(activeFilter.toLowerCase()));
+    }
+
+    // Macro Ring Component
+    function MacroRing({ label, value, unit, color, max, size = 'normal' }) {
+      const isSmall = size === 'small';
+      const radius = isSmall ? 14 : 22;
+      const svgSize = isSmall ? 36 : 52;
+      const strokeWidth = isSmall ? 3 : 4;
+      const pct = max ? Math.min(value / max, 1) : 1;
+      const circumference = 2 * Math.PI * radius;
+
+      return (
+        <div className="flex flex-col items-center">
+          <div style={{ width: svgSize, height: svgSize, position: 'relative' }}>
+            <svg width={svgSize} height={svgSize} className="transform -rotate-90">
+              <circle cx={svgSize/2} cy={svgSize/2} r={radius} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth} />
+              <circle
+                cx={svgSize/2} cy={svgSize/2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
+                strokeDasharray={circumference} strokeDashoffset={circumference * (1 - pct)}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className={`font-bold text-gray-800 ${isSmall ? 'text-[10px]' : 'text-xs'}`}>{value}{unit || ''}</span>
+            </div>
+          </div>
+          <span className={`text-gray-500 font-medium ${isSmall ? 'text-[9px] mt-0.5' : 'text-[11px] mt-1'}`}>{label}</span>
+        </div>
+      );
+    }
+
+    // Meal Card Component — now clickable for detail
+    function MealCard({ meal, isSelected, onToggle, onTap, showMacros = false }) {
+      return (
+        <div className="flex-shrink-0 w-44">
+          <div className="relative">
+            <img
+              src={meal.thumb}
+              alt={meal.name}
+              className="w-full h-36 object-cover rounded-2xl cursor-pointer"
+              onClick={onTap}
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggle(); }}
+              className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                isSelected
+                  ? 'bg-sage-500 text-white'
+                  : 'bg-white shadow-md text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {isSelected ? <Icons.Check /> : <Icons.Plus />}
+            </button>
+            {meal.isCustom && (
+              <span className="absolute top-2 left-2 bg-lemon-400 text-xs font-medium px-2 py-0.5 rounded-full">My Recipe</span>
+            )}
+          </div>
+          <p className="mt-2 text-sm font-medium text-gray-800 leading-tight cursor-pointer" onClick={onTap}>{meal.name}</p>
+
+          {showMacros && (
+            <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+              <span>{meal.calories} cal</span>
+              <span className="text-gray-300">|</span>
+              <span>{meal.protein}g protein</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Recipe Detail View (full-page)
+    function RecipeDetailView({ meal, onBack, isInPlan, onTogglePlan, interactions, onInteract }) {
+      const [activeTab, setActiveTab] = useState('ingredients');
+
+      const totalMacros = meal.protein + meal.carbs + meal.fat;
+
+      return (
+        <div className="min-h-screen bg-white max-w-md mx-auto pb-28 detail-scroll">
+          {/* Hero image */}
+          <div className="relative">
+            <img src={meal.thumb} alt={meal.name} className="w-full h-64 object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+            <button onClick={onBack} className="absolute top-12 left-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md">
+              <Icons.ChevronLeft />
+            </button>
+
+            {/* Interaction buttons on hero */}
+            <div className="absolute top-12 right-4 flex gap-2">
+              <button
+                onClick={() => onInteract(meal.id, 'bookmarked')}
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all ${interactions.bookmarked ? 'bg-lemon-400 text-gray-800' : 'bg-white/90 backdrop-blur text-gray-600'}`}
+              >
+                <Icons.Bookmark filled={interactions.bookmarked} />
+              </button>
+              <button
+                onClick={() => onInteract(meal.id, 'shared')}
+                className="w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md text-gray-600"
+              >
+                <Icons.Share size={18} />
+              </button>
+            </div>
+
+            <div className="absolute bottom-4 left-5 right-5">
+              <div className="flex items-center gap-1.5 mb-2">
+                {(meal.mealTypes || []).map(t => (
+                  <span key={t} className="text-[10px] font-semibold uppercase tracking-wider bg-white/20 backdrop-blur text-white px-2 py-0.5 rounded-full">
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-1">{meal.name}</h1>
+              <div className="flex items-center gap-3 text-white/80 text-sm">
+                <span className="flex items-center gap-1"><Icons.Clock /> {meal.prepTime} min</span>
+                <span>{meal.calories} cal</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Thumbs up / down bar */}
+          <div className="px-5 py-3 flex items-center justify-between border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => onInteract(meal.id, 'liked')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm font-medium ${interactions.liked ? 'bg-sage-100 text-sage-600' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                <Icons.ThumbUp filled={interactions.liked} />
+                <span>{interactions.liked ? 'Liked' : 'Like'}</span>
+              </button>
+              <button
+                onClick={() => onInteract(meal.id, 'disliked')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm font-medium ${interactions.disliked ? 'bg-red-50 text-red-500' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                <Icons.ThumbDown filled={interactions.disliked} />
+                <span>{interactions.disliked ? 'Not for me' : 'Dislike'}</span>
+              </button>
+            </div>
+            {interactions.shared && (
+              <span className="text-xs text-sage-500 font-medium bg-sage-50 px-2 py-1 rounded-full">Shared!</span>
+            )}
+          </div>
+
+          {/* Macro rings */}
+          <div className="px-5 py-4">
+            <div className="bg-gray-50 rounded-2xl p-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Nutrition per serving</h3>
+              <div className="flex items-center justify-around">
+                <MacroRing label="Calories" value={meal.calories} color="#778a62" max={600} />
+                <MacroRing label="Protein" value={meal.protein} unit="g" color="#ef4444" max={50} />
+                <MacroRing label="Carbs" value={meal.carbs} unit="g" color="#f59e0b" max={60} />
+                <MacroRing label="Fat" value={meal.fat} unit="g" color="#3b82f6" max={30} />
+                {meal.fiber && <MacroRing label="Fiber" value={meal.fiber} unit="g" color="#22c55e" max={15} />}
+              </div>
+
+              {/* Macro breakdown bar */}
+              <div className="mt-4 h-2 rounded-full overflow-hidden flex bg-gray-200">
+                <div style={{ width: `${(meal.protein / totalMacros) * 100}%` }} className="bg-red-400" />
+                <div style={{ width: `${(meal.carbs / totalMacros) * 100}%` }} className="bg-amber-400" />
+                <div style={{ width: `${(meal.fat / totalMacros) * 100}%` }} className="bg-blue-400" />
+              </div>
+              <div className="flex justify-between mt-2 text-[10px] text-gray-500">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Protein {Math.round((meal.protein / totalMacros) * 100)}%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Carbs {Math.round((meal.carbs / totalMacros) * 100)}%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Fat {Math.round((meal.fat / totalMacros) * 100)}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tab switcher */}
+          <div className="px-5 flex gap-1 bg-gray-100 mx-5 rounded-xl p-1">
+            {['ingredients', 'instructions', 'benefits'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all capitalize ${
+                  activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                }`}
+              >
+                {tab === 'benefits' ? 'Why It\u2019s Good' : tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div className="px-5 py-4">
+            {activeTab === 'ingredients' && (
+              <div className="slide-up">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-gray-500">{(meal.ingredients || []).length} items</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  {(meal.ingredients || []).map((ing, i) => (
+                    <div key={i} className={`flex items-center justify-between px-4 py-3.5 ${i !== meal.ingredients.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-sage-50 flex items-center justify-center text-sage-500">
+                          <Icons.Utensils />
+                        </div>
+                        <span className="text-gray-800 font-medium">{ing.name}</span>
+                      </div>
+                      <span className="text-sm text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md">{ing.amount}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'instructions' && (
+              <div className="slide-up space-y-3">
+                {(meal.instructions || []).map((step, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-sage-500 text-white text-sm font-bold flex items-center justify-center mt-0.5">{i + 1}</div>
+                    <p className="text-gray-700 leading-relaxed text-sm pt-0.5">{step}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'benefits' && (
+              <div className="slide-up space-y-3">
+                {(meal.benefits || []).map((benefit, i) => (
+                  <div key={i} className="flex gap-3 bg-green-50 rounded-xl p-3">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center mt-0.5">
+                      <Icons.Leaf />
+                    </div>
+                    <p className="text-gray-700 leading-relaxed text-sm">{benefit}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Fixed bottom CTA */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 max-w-md mx-auto">
+            <button
+              onClick={() => onTogglePlan(meal)}
+              className={`w-full py-3.5 font-semibold rounded-full flex items-center justify-center gap-2 transition-all ${
+                isInPlan
+                  ? 'bg-gray-100 text-gray-700'
+                  : 'bg-sage-500 text-white'
+              }`}
+            >
+              {isInPlan ? (
+                <><Icons.Check /> <span>Added to Plan</span></>
+              ) : (
+                <><Icons.Plus /> <span>Add to Plan</span></>
+              )}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Suggested Plan Card Component
+    function SuggestedPlanCard({ plan, onAddAll, onTapMeal }) {
+      return (
+        <div className="flex-shrink-0 w-72 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className={`bg-gradient-to-r ${plan.gradient} px-4 py-3`}>
+            <h3 className="font-bold text-white text-base">{plan.title}</h3>
+            <p className="text-white/80 text-xs">{plan.subtitle}</p>
+          </div>
+          <div className="p-3 space-y-2">
+            {plan.meals.map((item, i) => (
+              <div key={i} className="flex items-center gap-2.5 cursor-pointer" onClick={() => onTapMeal(item.meal)}>
+                <img src={item.meal.thumb} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 font-medium">{item.type}</p>
+                  <p className="text-sm text-gray-800 font-medium truncate">{item.meal.name}</p>
+                </div>
+                <span className="text-xs text-gray-400">{item.meal.calories} cal</span>
+              </div>
+            ))}
+          </div>
+          <div className="px-3 pb-3 flex items-center justify-between">
+            <span className="text-xs text-gray-500">{plan.totalCal} cal total</span>
+            <button onClick={onAddAll} className="px-3 py-1.5 bg-sage-500 text-white text-xs font-semibold rounded-full">Add All</button>
+          </div>
+        </div>
+      );
+    }
+
+    // Category Section Component — now accepts pre-filtered meals
+    function CategorySection({ categoryKey, category, filteredMeals, selectedMeals, onToggleMeal, onSeeAll, onTapMeal }) {
+      if (filteredMeals.length === 0) return null;
+      return (
+        <div className="mb-6">
+          <div className="flex items-center justify-between px-5 mb-3">
+            <h2 className="font-semibold text-gray-900">{category.name}</h2>
+            <button onClick={onSeeAll} className="text-sage-500 text-sm font-medium">See All</button>
+          </div>
+          <div className="flex gap-3 px-5 overflow-x-auto hide-scrollbar pb-2">
+            {filteredMeals.map(meal => (
+              <MealCard
+                key={meal.id}
+                meal={meal}
+                isSelected={!!selectedMeals[meal.id]}
+                onToggle={() => onToggleMeal(meal, categoryKey)}
+                onTap={() => onTapMeal(meal, categoryKey)}
+                showMacros={true}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Saved Plan Card Component
+    function SavedPlanCard({ plan, onLoad }) {
+      return (
+        <button onClick={onLoad} className="flex-shrink-0 w-32 text-left">
+          <div className="relative">
+            <div className="w-full h-24 rounded-2xl overflow-hidden bg-gray-100">
+              {plan.meals.length > 0 ? (
+                <div className="grid grid-cols-2 h-full">
+                  {plan.meals.slice(0, 4).map((meal, i) => (
+                    <img key={i} src={meal.thumb} alt="" className="w-full h-full object-cover" />
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400"><Icons.Utensils /></div>
+              )}
+            </div>
+            <div className="absolute bottom-1 right-1 bg-white/90 backdrop-blur rounded-full px-2 py-0.5">
+              <span className="text-xs font-medium text-gray-700">{plan.meals.length} meals</span>
+            </div>
+          </div>
+          <p className="mt-2 text-sm font-medium text-gray-800 truncate">{plan.name}</p>
+          <p className="text-xs text-gray-500">{plan.date}</p>
+        </button>
+      );
+    }
+
+    // Recipe Card with Macros (for plan detail view)
+    function RecipeCardWithMacros({ meal, onRemove, servings, onServingsChange, onTap }) {
+      return (
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+          <div className="flex gap-4">
+            <div className="relative">
+              <img src={meal.thumb} alt={meal.name} className="w-24 h-24 object-cover rounded-xl cursor-pointer" onClick={onTap} />
+              <button
+                onClick={onRemove}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md text-xs"
+              >
+                <Icons.X />
+              </button>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1 cursor-pointer" onClick={onTap}>{meal.name}</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <button onClick={() => onServingsChange(Math.max(1, servings - 1))} className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-500"><Icons.Minus /></button>
+                <span className="text-sm font-medium">{servings} serving{servings > 1 ? 's' : ''}</span>
+                <button onClick={() => onServingsChange(servings + 1)} className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-500"><Icons.Plus /></button>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <div><span className="font-semibold text-gray-800">{meal.calories * servings}</span><span className="text-gray-500 ml-1">cal</span></div>
+                <div><span className="font-semibold text-red-500">{meal.protein * servings}g</span><span className="text-gray-500 ml-1">P</span></div>
+                <div><span className="font-semibold text-amber-500">{meal.carbs * servings}g</span><span className="text-gray-500 ml-1">C</span></div>
+                <div><span className="font-semibold text-blue-500">{meal.fat * servings}g</span><span className="text-gray-500 ml-1">F</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Add Recipe Modal — two modes: URL import or Manual entry
+    function AddRecipeModal({ onClose, onSave }) {
+      const [mode, setMode] = useState(null); // null = chooser, 'url', 'manual'
+      const [url, setUrl] = useState('');
+      const [urlLoading, setUrlLoading] = useState(false);
+      const [urlImported, setUrlImported] = useState(false);
+      const [name, setName] = useState('');
+      const [description, setDescription] = useState('');
+      const [calories, setCalories] = useState('');
+      const [protein, setProtein] = useState('');
+      const [carbs, setCarbs] = useState('');
+      const [fat, setFat] = useState('');
+      const [prepTime, setPrepTime] = useState('');
+      const [photoPreview, setPhotoPreview] = useState(null);
+      const [ingredientsText, setIngredientsText] = useState('');
+      const [instructionsText, setInstructionsText] = useState('');
+
+      const handlePhotoSelect = () => {
+        // Simulated photo selection
+        const placeholders = [
+          'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=300&q=80',
+          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80',
+          'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&q=80',
+        ];
+        setPhotoPreview(placeholders[Math.floor(Math.random() * placeholders.length)]);
+      };
+
+      const handleUrlImport = () => {
+        if (!url.trim()) return;
+        setUrlLoading(true);
+        // Simulate fetching recipe from URL
+        setTimeout(() => {
+          setUrlLoading(false);
+          setUrlImported(true);
+          // Simulated imported data
+          const domain = url.includes('allrecipes') ? 'AllRecipes' : url.includes('food') ? 'Food Network' : 'Recipe Site';
+          setName('Imported: Lemon Herb Chicken');
+          setDescription('A bright, zesty grilled chicken with fresh herbs and a squeeze of lemon. Perfect for weeknight dinners.');
+          setCalories('380');
+          setProtein('35');
+          setCarbs('12');
+          setFat('22');
+          setPrepTime('25');
+          setIngredientsText('2 chicken breasts\n2 tbsp olive oil\n1 lemon, juiced\n2 cloves garlic, minced\n1 tbsp fresh rosemary\n1 tbsp fresh thyme\nSalt and pepper to taste');
+          setInstructionsText('Combine olive oil, lemon juice, garlic, rosemary, and thyme.\nMarinate chicken for at least 30 minutes.\nGrill on medium-high for 6-7 min per side.\nRest for 5 minutes before slicing.\nServe with your favorite sides.');
+          setPhotoPreview('https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&q=80');
+        }, 1500);
+      };
+
+      const handleSave = () => {
+        if (!name.trim()) return;
+        const ingredientsList = ingredientsText.trim().split('\n').filter(l => l.trim()).map(l => ({ name: l.trim(), amount: '', category: 'Other' }));
+        const instructionsList = instructionsText.trim().split('\n').filter(l => l.trim());
+
+        onSave({
+          id: `custom-${Date.now()}`,
+          name: name.trim(),
+          description: description.trim(),
+          calories: parseInt(calories) || 0,
+          protein: parseInt(protein) || 0,
+          carbs: parseInt(carbs) || 0,
+          fat: parseInt(fat) || 0,
+          prepTime: parseInt(prepTime) || 0,
+          fiber: 0,
+          thumb: photoPreview || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=300&q=80',
+          isCustom: true,
+          ingredients: ingredientsList,
+          instructions: instructionsList,
+          benefits: description.trim() ? ['Custom recipe \u2014 ' + description.trim().slice(0, 120)] : [],
+        });
+        onClose();
+      };
+
+      // Mode chooser
+      if (mode === null) {
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={onClose}>
+            <div className="bg-white w-full max-w-md rounded-t-3xl p-6 slide-up" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Add a Recipe</h2>
+                <button onClick={onClose} className="text-gray-400"><Icons.X /></button>
+              </div>
+
+              <div className="space-y-3">
+                <button onClick={() => setMode('url')} className="w-full flex items-center gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors text-left">
+                  <div className="w-12 h-12 rounded-xl bg-sage-100 flex items-center justify-center text-sage-600 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Import from URL</h3>
+                    <p className="text-sm text-gray-500">Paste a link from any recipe site</p>
+                  </div>
+                  <div className="ml-auto text-gray-400"><Icons.ChevronRight /></div>
+                </button>
+
+                <button onClick={() => setMode('manual')} className="w-full flex items-center gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors text-left">
+                  <div className="w-12 h-12 rounded-xl bg-lemon-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+                    <Icons.Edit />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Enter Manually</h3>
+                    <p className="text-sm text-gray-500">Add photo, description & details</p>
+                  </div>
+                  <div className="ml-auto text-gray-400"><Icons.ChevronRight /></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // URL Import mode
+      if (mode === 'url' && !urlImported) {
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={onClose}>
+            <div className="bg-white w-full max-w-md rounded-t-3xl p-6 slide-up" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-2">
+                <button onClick={() => setMode(null)} className="text-gray-500 flex items-center gap-1 text-sm"><Icons.ChevronLeft /> <span>Back</span></button>
+                <button onClick={onClose} className="text-gray-400"><Icons.X /></button>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Import from URL</h2>
+              <p className="text-sm text-gray-500 mb-6">Paste a recipe link and we\u2019ll pull in the details automatically.</p>
+
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </div>
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://www.allrecipes.com/recipe/..."
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-sage-500 text-gray-800"
+                  autoFocus
+                />
+              </div>
+
+              {/* Supported sites hint */}
+              <div className="bg-gray-50 rounded-xl p-3 mb-6">
+                <p className="text-xs text-gray-500 font-medium mb-2">Works with most recipe sites including:</p>
+                <div className="flex flex-wrap gap-2">
+                  {['AllRecipes', 'Food Network', 'Bon App\u00e9tit', 'Epicurious', 'NYT Cooking', 'Tasty'].map(site => (
+                    <span key={site} className="text-xs bg-white px-2 py-1 rounded-md text-gray-600 border border-gray-100">{site}</span>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleUrlImport}
+                disabled={!url.trim() || urlLoading}
+                className="w-full py-3.5 bg-sage-500 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {urlLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Importing recipe...</span>
+                  </>
+                ) : (
+                  <span>Import Recipe</span>
+                )}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Manual entry mode OR URL imported (editable review)
+      return (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={onClose}>
+          <div className="bg-white w-full max-w-md rounded-t-3xl slide-up" onClick={e => e.stopPropagation()} style={{ maxHeight: '92vh' }}>
+            <div className="overflow-y-auto hide-scrollbar p-6" style={{ maxHeight: '92vh' }}>
+              <div className="flex items-center justify-between mb-2">
+                <button onClick={() => { if (urlImported) { setUrlImported(false); setMode('url'); } else { setMode(null); } }} className="text-gray-500 flex items-center gap-1 text-sm"><Icons.ChevronLeft /> <span>Back</span></button>
+                <button onClick={onClose} className="text-gray-400"><Icons.X /></button>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">
+                {urlImported ? 'Review Imported Recipe' : 'Add Your Recipe'}
+              </h2>
+              {urlImported && <p className="text-sm text-sage-500 mb-4 flex items-center gap-1"><Icons.Check /> Imported from URL \u2014 edit anything below</p>}
+              {!urlImported && <p className="text-sm text-gray-500 mb-4">Fill in as much or as little as you\u2019d like.</p>}
+
+              {/* Photo area */}
+              <div
+                onClick={handlePhotoSelect}
+                className="w-full h-40 rounded-2xl flex flex-col items-center justify-center mb-5 border-2 border-dashed border-gray-300 overflow-hidden cursor-pointer relative hover:border-sage-400 transition-colors"
+                style={{ background: photoPreview ? 'transparent' : '#f9fafb' }}
+              >
+                {photoPreview ? (
+                  <>
+                    <img src={photoPreview} alt="Recipe" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <span className="text-white text-sm font-medium bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-1.5"><Icons.Camera /> Change photo</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Icons.Camera />
+                    <span className="text-sm text-gray-500 mt-2">Tap to add a photo</span>
+                    <span className="text-xs text-gray-400">Optional</span>
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Recipe Name *</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Grandma's Chicken Soup" className="w-full mt-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-sage-500" />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="A short description of the recipe..."
+                    rows={2}
+                    className="w-full mt-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-sage-500 resize-none"
+                  />
+                </div>
+
+                {/* Prep time */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Prep Time (minutes)</label>
+                  <input type="number" value={prepTime} onChange={(e) => setPrepTime(e.target.value)} placeholder="e.g., 20" className="w-full mt-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-sage-500" />
+                </div>
+
+                {/* Nutrition */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Nutrition (optional)</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[['Cal', calories, setCalories], ['Protein', protein, setProtein], ['Carbs', carbs, setCarbs], ['Fat', fat, setFat]].map(([l, v, s]) => (
+                      <div key={l}>
+                        <input type="number" value={v} onChange={(e) => s(e.target.value)} placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-center focus:outline-none focus:border-sage-500" />
+                        <span className="text-xs text-gray-500 block text-center mt-1">{l}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ingredients */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Ingredients</label>
+                  <p className="text-xs text-gray-400 mb-1">One per line</p>
+                  <textarea
+                    value={ingredientsText}
+                    onChange={(e) => setIngredientsText(e.target.value)}
+                    placeholder={"2 chicken breasts\n1 tbsp olive oil\n1 cup rice\n..."}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-sage-500 resize-none text-sm"
+                  />
+                </div>
+
+                {/* Instructions */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Instructions</label>
+                  <p className="text-xs text-gray-400 mb-1">One step per line</p>
+                  <textarea
+                    value={instructionsText}
+                    onChange={(e) => setInstructionsText(e.target.value)}
+                    placeholder={"Preheat oven to 375\u00b0F.\nSeason chicken with salt and pepper.\nBake for 25 minutes.\n..."}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-sage-500 resize-none text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6 pb-4">
+                <button onClick={onClose} className="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl">Cancel</button>
+                <button onClick={handleSave} disabled={!name.trim()} className="flex-1 py-3 bg-sage-500 text-white font-semibold rounded-xl disabled:opacity-50">
+                  {urlImported ? 'Save Imported Recipe' : 'Add Recipe'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Shopping List View
+    function ShoppingListView({ meals, planName, onBack }) {
+      const recipeIngredients = meals.map(meal => ({
+        recipe: meal.name, servings: meal.servings || 1, ingredients: meal.ingredients || [], thumb: meal.thumb,
+      }));
+      const totalItems = recipeIngredients.reduce((sum, r) => sum + r.ingredients.length, 0);
+
+      return (
+        <div className="min-h-screen bg-gray-50 max-w-md mx-auto pb-8">
+          <div className="sticky top-0 bg-white border-b border-gray-100 px-5 pt-14 pb-4 z-10">
+            <div className="flex items-center gap-3">
+              <button onClick={onBack} className="text-gray-600"><Icons.ChevronLeft /></button>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Shopping List</h1>
+                <p className="text-sm text-gray-500">{planName} \u2022 {totalItems} items</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            {recipeIngredients.map((recipe, idx) => (
+              <div key={idx} className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <img src={recipe.thumb} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{recipe.recipe}</h3>
+                    <p className="text-xs text-gray-500">{recipe.servings} serving{recipe.servings > 1 ? 's' : ''} \u2022 {recipe.ingredients.length} items</p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  {recipe.ingredients.length > 0 ? recipe.ingredients.map((ing, i) => (
+                    <div key={i} className={`flex items-center justify-between px-4 py-3 ${i !== recipe.ingredients.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded border-2 border-gray-300" />
+                        <span className="text-gray-800">{ing.name}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">{ing.amount}</span>
+                    </div>
+                  )) : (
+                    <div className="px-4 py-6 text-center text-gray-400"><p>No ingredients listed</p></div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Main App
+    function App() {
+      const [view, setView] = useState('main');
+      const [selectedCategory, setSelectedCategory] = useState(null);
+      const [selectedMeals, setSelectedMeals] = useState({});
+      const [customRecipes, setCustomRecipes] = useState([]);
+      const [showAddRecipe, setShowAddRecipe] = useState(false);
+      const [currentPlanName, setCurrentPlanName] = useState('');
+      const [savedPlans, setSavedPlans] = useState([
+        { id: 'sp1', name: 'Week 1 Meal Prep', date: 'Jan 26', meals: [
+          { ...MEAL_DATA['high-protein'].meals[0], servings: 2 },
+          { ...MEAL_DATA['low-calorie'].meals[0], servings: 1 },
+          { ...MEAL_DATA['mediterranean'].meals[2], servings: 1 }
+        ]},
+        { id: 'sp2', name: 'Quick Weekday Meals', date: 'Jan 23', meals: [
+          { ...MEAL_DATA['quick-easy'].meals[0], servings: 1 },
+          { ...MEAL_DATA['quick-easy'].meals[1], servings: 1 }
+        ]},
+      ]);
+      const [planName, setPlanName] = useState('');
+      const [showSaveModal, setShowSaveModal] = useState(false);
+
+      // Recipe detail state
+      const [detailMeal, setDetailMeal] = useState(null);
+      const [detailCategory, setDetailCategory] = useState(null);
+      const [prevView, setPrevView] = useState('main');
+
+      // Meal type filter
+      const [mealTypeFilter, setMealTypeFilter] = useState('All');
+
+      // Interactions state: { mealId: { liked, disliked, bookmarked, shared } }
+      const [interactions, setInteractions] = useState({});
+
+      const getInteractions = (mealId) => interactions[mealId] || { liked: false, disliked: false, bookmarked: false, shared: false };
+
+      const handleInteract = (mealId, action) => {
+        setInteractions(prev => {
+          const current = prev[mealId] || { liked: false, disliked: false, bookmarked: false, shared: false };
+          const updated = { ...current };
+
+          if (action === 'liked') {
+            updated.liked = !updated.liked;
+            if (updated.liked) updated.disliked = false;
+          } else if (action === 'disliked') {
+            updated.disliked = !updated.disliked;
+            if (updated.disliked) updated.liked = false;
+          } else if (action === 'bookmarked') {
+            updated.bookmarked = !updated.bookmarked;
+          } else if (action === 'shared') {
+            updated.shared = true;
+            // Simulated share — briefly show "shared" state
+          }
+
+          return { ...prev, [mealId]: updated };
+        });
+      };
+
+      const openDetail = (meal, categoryKey) => {
+        setDetailMeal(meal);
+        setDetailCategory(categoryKey);
+        setPrevView(view);
+        setView('detail');
+      };
+
+      const toggleMeal = (meal, categoryKey) => {
+        setSelectedMeals(prev => {
+          if (prev[meal.id]) {
+            const newMeals = { ...prev };
+            delete newMeals[meal.id];
+            return newMeals;
+          } else {
+            return { ...prev, [meal.id]: { ...meal, servings: 1, category: categoryKey } };
+          }
+        });
+      };
+
+      const updateServings = (mealId, servings) => {
+        setSelectedMeals(prev => ({ ...prev, [mealId]: { ...prev[mealId], servings } }));
+      };
+
+      const removeMeal = (mealId) => {
+        setSelectedMeals(prev => { const n = { ...prev }; delete n[mealId]; return n; });
+      };
+
+      const addCustomRecipe = (recipe) => {
+        setCustomRecipes(prev => [recipe, ...prev]);
+      };
+
+      const savePlan = () => {
+        if (!planName.trim()) return;
+        const newPlan = {
+          id: `plan-${Date.now()}`, name: planName,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          meals: Object.values(selectedMeals),
+        };
+        setSavedPlans(prev => [newPlan, ...prev]);
+        setShowSaveModal(false); setPlanName(''); setCurrentPlanName(planName);
+      };
+
+      const loadPlan = (plan) => {
+        const mealsObj = {};
+        plan.meals.forEach(meal => { mealsObj[meal.id] = { ...meal, servings: meal.servings || 1 }; });
+        setSelectedMeals(mealsObj); setCurrentPlanName(plan.name); setView('plan');
+      };
+
+      const selectedMealsArray = Object.values(selectedMeals);
+      const totalMeals = selectedMealsArray.length;
+
+      // Recipe Detail View
+      if (view === 'detail' && detailMeal) {
+        return (
+          <RecipeDetailView
+            meal={detailMeal}
+            onBack={() => setView(prevView)}
+            isInPlan={!!selectedMeals[detailMeal.id]}
+            onTogglePlan={(meal) => toggleMeal(meal, detailCategory || 'popular')}
+            interactions={getInteractions(detailMeal.id)}
+            onInteract={handleInteract}
+          />
+        );
+      }
+
+      // Shopping List View
+      if (view === 'shopping') {
+        return <ShoppingListView meals={selectedMealsArray} planName={currentPlanName || 'My Plan'} onBack={() => setView('plan')} />;
+      }
+
+      // Main Page
+      if (view === 'main') {
+        const filteredFavorites = filterByType(FAVORITES, mealTypeFilter);
+
+        // Add all meals from a suggested plan
+        const addSuggestedPlan = (plan) => {
+          const newMeals = { ...selectedMeals };
+          plan.meals.forEach(item => {
+            if (!newMeals[item.meal.id]) {
+              newMeals[item.meal.id] = { ...item.meal, servings: 1, category: 'suggested' };
+            }
+          });
+          setSelectedMeals(newMeals);
+        };
+
+        return (
+          <div className={`min-h-screen bg-white max-w-md mx-auto ${totalMeals > 0 ? 'pb-28' : 'pb-8'}`}>
+            <div className="px-5 pt-14 pb-2 flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Meal Planning</h1>
+              <button onClick={() => setShowAddRecipe(true)} className="text-sage-500 text-sm font-medium">+ Add Recipe</button>
+            </div>
+
+            {/* Suggested for You */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between px-5 mb-1">
+                <div>
+                  <h2 className="font-semibold text-gray-900">Suggested for You</h2>
+                  <p className="text-xs text-gray-500">Curated by Lemon based on your preferences</p>
+                </div>
+              </div>
+              <div className="flex gap-3 px-5 overflow-x-auto hide-scrollbar pb-2 pt-2">
+                {SUGGESTED_PLANS.map(plan => (
+                  <SuggestedPlanCard
+                    key={plan.id}
+                    plan={plan}
+                    onAddAll={() => addSuggestedPlan(plan)}
+                    onTapMeal={(meal) => openDetail(meal, 'suggested')}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {savedPlans.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between px-5 mb-3">
+                  <h2 className="font-semibold text-gray-900">Recent</h2>
+                  <button className="text-sage-500 text-sm font-medium">See All</button>
+                </div>
+                <div className="flex gap-3 px-5 overflow-x-auto hide-scrollbar pb-2">
+                  {savedPlans.map(plan => <SavedPlanCard key={plan.id} plan={plan} onLoad={() => loadPlan(plan)} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Meal Type Filter Bar */}
+            <div className="px-5 pb-4 pt-1">
+              <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+                {MEAL_TYPES.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setMealTypeFilter(type)}
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      mealTypeFilter === type
+                        ? 'bg-sage-500 text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {type !== 'All' && <span className="mr-1">{MEAL_TYPE_ICONS[type]}</span>}
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Saved Section */}
+            {filteredFavorites.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between px-5 mb-3">
+                  <h2 className="font-semibold text-gray-900">Saved</h2>
+                  <button className="text-sage-500 text-sm font-medium">See All</button>
+                </div>
+                <div className="flex gap-3 px-5 overflow-x-auto hide-scrollbar pb-2">
+                  {filteredFavorites.map(meal => (
+                    <MealCard key={meal.id} meal={meal} isSelected={!!selectedMeals[meal.id]} onToggle={() => toggleMeal(meal, 'popular')} onTap={() => openDetail(meal, 'popular')} showMacros={true} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* My Recipes Section */}
+            {customRecipes.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between px-5 mb-3">
+                <h2 className="font-semibold text-gray-900">My Recipes</h2>
+              </div>
+              <div className="flex gap-3 px-5 overflow-x-auto hide-scrollbar pb-2">
+                {filterByType(customRecipes, mealTypeFilter).map(meal => (
+                  <MealCard key={meal.id} meal={meal} isSelected={!!selectedMeals[meal.id]} onToggle={() => toggleMeal(meal, 'custom')} onTap={() => openDetail(meal, 'custom')} showMacros={true} />
+                ))}
+              </div>
+            </div>
+            )}
+
+            {Object.entries(MEAL_DATA).map(([key, category]) => {
+              const filtered = filterByType(category.meals, mealTypeFilter);
+              return (
+                <CategorySection
+                  key={key} categoryKey={key} category={category} filteredMeals={filtered} selectedMeals={selectedMeals}
+                  onToggleMeal={toggleMeal}
+                  onTapMeal={(meal) => openDetail(meal, key)}
+                  onSeeAll={() => { setSelectedCategory(key); setView('category'); }}
+                />
+              );
+            })}
+
+            {totalMeals > 0 && (
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 max-w-md mx-auto slide-up">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {selectedMealsArray.slice(0, 3).map((meal, i) => (
+                        <img key={i} src={meal.thumb} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600">{totalMeals} meal{totalMeals > 1 ? 's' : ''} selected</span>
+                  </div>
+                  <button onClick={() => { setCurrentPlanName(''); setView('plan'); }} className="px-6 py-3 bg-sage-500 text-white font-semibold rounded-full">Save plan</button>
+                </div>
+              </div>
+            )}
+
+            {showAddRecipe && <AddRecipeModal onClose={() => setShowAddRecipe(false)} onSave={addCustomRecipe} />}
+          </div>
+        );
+      }
+
+      // See All Category View
+      if (view === 'category' && selectedCategory) {
+        const category = MEAL_DATA[selectedCategory];
+        return (
+          <div className="min-h-screen bg-white max-w-md mx-auto pb-32">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 pt-14 pb-4 z-10">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setView('main')} className="text-gray-600"><Icons.ChevronLeft /></button>
+                <h1 className="text-xl font-semibold text-gray-900">{category.name}</h1>
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                {category.meals.map(meal => (
+                  <MealCard key={meal.id} meal={meal} isSelected={!!selectedMeals[meal.id]} onToggle={() => toggleMeal(meal, selectedCategory)} onTap={() => openDetail(meal, selectedCategory)} showMacros={true} />
+                ))}
+              </div>
+            </div>
+            {totalMeals > 0 && (
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 max-w-md mx-auto">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {selectedMealsArray.slice(0, 3).map((meal, i) => (
+                        <img key={i} src={meal.thumb} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600">{totalMeals} meal{totalMeals > 1 ? 's' : ''}</span>
+                  </div>
+                  <button onClick={() => { setCurrentPlanName(''); setView('plan'); }} className="px-6 py-3 bg-sage-500 text-white font-semibold rounded-full">Save plan</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Plan Detail View
+      if (view === 'plan') {
+        return (
+          <div className="min-h-screen bg-gray-50 max-w-md mx-auto pb-32">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 pt-14 pb-4 z-10">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setView('main')} className="text-gray-600"><Icons.ChevronLeft /></button>
+                <div className="flex-1">
+                  <h1 className="text-xl font-semibold text-gray-900">{currentPlanName || 'New Plan'}</h1>
+                  <p className="text-sm text-gray-500">{totalMeals} meal{totalMeals > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-gray-900">Your Meals</h2>
+                <button onClick={() => setView('main')} className="flex items-center gap-1 text-sage-500 text-sm font-medium">
+                  <Icons.Edit /><span>Add more / Edit</span>
+                </button>
+              </div>
+              {totalMeals > 0 ? (
+                selectedMealsArray.map(meal => (
+                  <RecipeCardWithMacros
+                    key={meal.id} meal={meal} servings={meal.servings}
+                    onRemove={() => removeMeal(meal.id)}
+                    onServingsChange={(s) => updateServings(meal.id, s)}
+                    onTap={() => openDetail(meal, meal.category)}
+                  />
+                ))
+              ) : (
+                <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+                  <p className="text-gray-500 mb-3">No meals added yet</p>
+                  <button onClick={() => setView('main')} className="px-4 py-2 bg-sage-500 text-white text-sm font-medium rounded-lg">Browse Meals</button>
+                </div>
+              )}
+            </div>
+            {totalMeals > 0 && (
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 max-w-md mx-auto">
+                <div className="flex gap-2">
+                  <button onClick={() => setShowSaveModal(true)} className="flex-1 py-3 bg-sage-500 text-white font-semibold rounded-full flex items-center justify-center gap-2"><Icons.Save /><span>Save</span></button>
+                  <button className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-full flex items-center justify-center gap-2"><Icons.Share size={18} /><span>Share</span></button>
+                  <button onClick={() => setView('shopping')} className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-full flex items-center justify-center gap-2"><Icons.List /><span>Shopping</span></button>
+                </div>
+              </div>
+            )}
+            {showSaveModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setShowSaveModal(false)}>
+                <div className="bg-white w-full max-w-md rounded-t-3xl p-6 slide-up" onClick={e => e.stopPropagation()}>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Save Your Plan</h2>
+                  <input type="text" placeholder="Plan name (e.g., My Week Plan)" value={planName} onChange={(e) => setPlanName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-800 mb-4 focus:outline-none focus:border-sage-500" />
+                  <div className="flex gap-3">
+                    <button onClick={() => setShowSaveModal(false)} className="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl">Cancel</button>
+                    <button onClick={savePlan} disabled={!planName.trim()} className="flex-1 py-3 bg-sage-500 text-white font-semibold rounded-xl disabled:opacity-50">Save</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
