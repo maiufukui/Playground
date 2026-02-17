@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lemon - Monthly Summary (Light)</title>
+  <title>Lemon - Monthly Summary Enhanced (Light)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -26,33 +26,28 @@
     body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fafaf8; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
     @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .slide-up { animation: slide-up 0.5s ease-out; }
     .slide-up-delay-1 { animation: slide-up 0.5s ease-out 0.1s both; }
     .slide-up-delay-2 { animation: slide-up 0.5s ease-out 0.2s both; }
     .slide-up-delay-3 { animation: slide-up 0.5s ease-out 0.3s both; }
     .slide-up-delay-4 { animation: slide-up 0.5s ease-out 0.4s both; }
-
     @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
     .fade-in { animation: fade-in 0.4s ease-out; }
-
     @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-    .pop { animation: pop 0.4s ease-out; }
+    .pop-delay-0 { animation: pop 0.4s ease-out 0s both; }
     .pop-delay-1 { animation: pop 0.4s ease-out 0.15s both; }
     .pop-delay-2 { animation: pop 0.4s ease-out 0.3s both; }
     .pop-delay-3 { animation: pop 0.4s ease-out 0.45s both; }
-
-    @keyframes number-pop {
-      0% { transform: scale(0.5); opacity: 0; }
-      60% { transform: scale(1.1); }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    @keyframes number-pop { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
     .number-pop { animation: number-pop 0.6s ease-out; }
-
-    @keyframes check-pop { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-    .check-pop { animation: check-pop 0.3s ease-out; }
-
+    @keyframes celebrate-bounce {
+      0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+      50% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+      70% { transform: scale(0.95) rotate(-1deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .celebrate-bounce { animation: celebrate-bounce 0.7s ease-out; }
     .gradient-text {
       background: linear-gradient(135deg, #778a62 0%, #5d6e4d 100%);
       -webkit-background-clip: text;
@@ -66,7 +61,6 @@
   <script type="text/babel">
     const { useState } = React;
 
-    // Icons
     const Icons = {
       Leaf: () => <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>,
       ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>,
@@ -80,25 +74,24 @@
       Zap: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
       Moon: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>,
       Heart: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>,
-      Scale: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>,
       Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>,
       TrendingUp: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
       TrendingDown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>,
       ArrowRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
       Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
       Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>,
-      Target: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-      Utensils: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>,
-      Sun: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>,
+      ThumbsUp: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>,
+      MessageCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
       Wind: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>,
       Droplet: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>,
-      Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+      Minus: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+      Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+      Edit: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>,
     };
 
-    // Data
+    // ===================== DATA =====================
     const SUMMARY_DATA = {
-      month: 'January',
-      nextMonth: 'February',
+      month: 'January', nextMonth: 'February',
       stats: {
         activities: { value: 47, change: 12, unit: '' },
         avgSteps: { value: 6842, change: 8, unit: '/day' },
@@ -106,43 +99,22 @@
         activeDays: { value: 22, change: 15, unit: 'of 31' },
       },
       goals: [
-        {
-          id: 'muscle',
-          name: 'Build Muscle',
-          icon: 'Dumbbell',
-          status: 'needs-attention',
-          statusLabel: 'Needs attention',
-          progress: 15,
-          insight: "Progress has stalled. No strength training sessions were logged this month. Your body needs resistance exercise to trigger muscle growth—right now, that signal is absent.",
-          scienceFact: "Muscle protein synthesis peaks 24-48 hours after resistance training. Without regular stimulus, you miss this growth window.",
-        },
-        {
-          id: 'energy',
-          name: 'Boost Energy',
-          icon: 'Zap',
-          status: 'improving',
-          statusLabel: 'Improving',
-          progress: 65,
-          insight: "Your energy patterns are improving! Morning activities are up 20%, and you're moving more consistently throughout the day.",
-          scienceFact: "Regular movement increases mitochondrial density, giving your cells more energy-producing power plants.",
-        },
-        {
-          id: 'sleep',
-          name: 'Better Sleep',
-          icon: 'Moon',
-          status: 'on-track',
-          statusLabel: 'On track',
-          progress: 78,
-          insight: "Sleep quality has improved. Your evening wind-down routine is helping—keep it consistent for best results.",
-          scienceFact: "Deep sleep is when your body repairs tissue and consolidates memory. Consistency in bedtime improves deep sleep duration.",
-        },
+        { id: 'muscle', name: 'Build Muscle', icon: 'Dumbbell', status: 'needs-attention', statusLabel: 'Needs attention', progress: 15,
+          insight: "Progress has stalled. No strength training sessions were logged this month. Your body needs resistance exercise to trigger muscle growth\u2014right now, that signal is absent.",
+          scienceFact: "Muscle protein synthesis peaks 24-48 hours after resistance training. Without regular stimulus, you miss this growth window." },
+        { id: 'energy', name: 'Boost Energy', icon: 'Zap', status: 'improving', statusLabel: 'Improving', progress: 65,
+          insight: "Your energy patterns are improving! Morning activities are up 20%, and you\u2019re moving more consistently throughout the day.",
+          scienceFact: "Regular movement increases mitochondrial density, giving your cells more energy-producing power plants." },
+        { id: 'sleep', name: 'Better Sleep', icon: 'Moon', status: 'on-track', statusLabel: 'On track', progress: 78,
+          insight: "Sleep quality has improved. Your evening wind-down routine is helping\u2014keep it consistent for best results.",
+          scienceFact: "Deep sleep is when your body repairs tissue and consolidates memory. Consistency in bedtime improves deep sleep duration." },
       ],
       inspiration: {
-        message: "The next step is simple: act on the basics, one small habit at a time. Even one strength session or a few logged meals can restart your momentum. This journey isn't about perfection—it's about progress.",
+        message: "The next step is simple: act on the basics, one small habit at a time. Even one strength session or a few logged meals can restart your momentum. This journey isn\u2019t about perfection\u2014it\u2019s about progress.",
         tips: [
           { goal: 'Build Muscle', tip: "Start with just 2 strength sessions this week. Even 15-minute bodyweight workouts trigger muscle protein synthesis.", icon: 'Dumbbell' },
           { goal: 'Boost Energy', tip: "Keep your morning movement streak going! Try adding a 5-minute afternoon walk to beat the 3pm slump.", icon: 'Zap' },
-          { goal: 'Better Sleep', tip: "You're doing great with sleep. Consider dimming lights 1 hour before bed to boost melatonin naturally.", icon: 'Moon' },
+          { goal: 'Better Sleep', tip: "You\u2019re doing great with sleep. Consider dimming lights 1 hour before bed to boost melatonin naturally.", icon: 'Moon' },
         ]
       },
       achievements: [
@@ -152,102 +124,94 @@
       ]
     };
 
-    // Personalized Plan Data
     const PERSONALIZED_PLAN = {
       month: 'February',
-      focusAreas: [
-        { id: 'muscle', name: 'Build Muscle', icon: 'Dumbbell', priority: 'high' },
-        { id: 'energy', name: 'Boost Energy', icon: 'Zap', priority: 'medium' },
-      ],
+      scienceTip: { title: "Why 2 strength sessions?", content: "Research shows that training each muscle group twice per week optimizes muscle protein synthesis. Starting with 2 sessions builds the habit while giving your body adequate recovery time between workouts." },
       weeklyTargets: [
-        { label: 'Strength sessions', target: 2, icon: 'Dumbbell' },
-        { label: 'Daily steps', target: '7,500', icon: 'Footprints' },
-        { label: 'Sleep before 11pm', target: '5 nights', icon: 'Moon' },
-        { label: 'Hydration check-ins', target: 4, icon: 'Droplet' },
+        { label: 'Strength sessions', target: 2, icon: 'Dumbbell', editable: true, min: 1, max: 5 },
+        { label: 'Daily steps', target: 7500, display: '7,500', icon: 'Footprints', editable: true, min: 3000, max: 15000, step: 500 },
+        { label: 'Sleep before 11pm', target: 5, display: '5 nights', icon: 'Moon', editable: true, min: 2, max: 7 },
+        { label: 'Hydration check-ins', target: 4, icon: 'Droplet', editable: true, min: 1, max: 7 },
       ],
-      starterPlan: [
-        {
-          day: 'Monday',
-          activities: [
+      weeks: [
+        { weekNum: 1, title: 'Week 1: Foundation', theme: 'Build habits with short, manageable sessions', activities: [
+          { day: 'Monday', activities: [
             { title: '15-min bodyweight workout', time: 'Morning', icon: 'Dumbbell', isNew: true },
             { title: '10-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
             { title: 'Evening wind-down', time: '10pm', icon: 'Moon', isNew: false },
-          ]
-        },
-        {
-          day: 'Tuesday',
-          activities: [
+          ]},
+          { day: 'Tuesday', activities: [
             { title: 'Morning stretch', time: 'Morning', icon: 'Heart', isNew: false },
             { title: '15-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
             { title: 'Box breathing', time: 'Afternoon', icon: 'Wind', isNew: false },
-          ]
-        },
-        {
-          day: 'Wednesday',
-          activities: [
+          ]},
+          { day: 'Wednesday', activities: [
             { title: '15-min bodyweight workout', time: 'Morning', icon: 'Dumbbell', isNew: true },
             { title: '10-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
-          ]
-        },
+          ]},
+        ]},
+        { weekNum: 2, title: 'Week 2: Build Momentum', theme: 'Add an extra strength session and extend walks', activities: [
+          { day: 'Monday', activities: [
+            { title: '20-min bodyweight workout', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: '15-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
+          ]},
+          { day: 'Wednesday', activities: [
+            { title: '20-min bodyweight workout', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: '10-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
+          ]},
+          { day: 'Friday', activities: [
+            { title: '15-min strength session', time: 'Morning', icon: 'Dumbbell', isNew: true },
+            { title: '15-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
+          ]},
+        ]},
+        { weekNum: 3, title: 'Week 3: Push Further', theme: 'Increase intensity and add a cardio element', activities: [
+          { day: 'Monday', activities: [
+            { title: '25-min strength workout', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: '20-min brisk walk', time: 'After lunch', icon: 'Footprints', isNew: false },
+          ]},
+          { day: 'Wednesday', activities: [
+            { title: '25-min strength workout', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: '15-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
+          ]},
+          { day: 'Friday', activities: [
+            { title: '20-min strength session', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: '20-min jog or cycle', time: 'Afternoon', icon: 'Zap', isNew: true },
+          ]},
+        ]},
+        { weekNum: 4, title: 'Week 4: Consolidate', theme: 'Lighter week for recovery while maintaining habits', activities: [
+          { day: 'Monday', activities: [
+            { title: '15-min light strength', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: '20-min walk', time: 'After lunch', icon: 'Footprints', isNew: false },
+          ]},
+          { day: 'Wednesday', activities: [
+            { title: '15-min light strength', time: 'Morning', icon: 'Dumbbell', isNew: false },
+            { title: 'Yoga or mobility', time: 'Evening', icon: 'Heart', isNew: true },
+          ]},
+          { day: 'Friday', activities: [
+            { title: 'Active recovery walk', time: 'Morning', icon: 'Footprints', isNew: false },
+            { title: 'Reflect & plan March', time: 'Evening', icon: 'Sparkles', isNew: true },
+          ]},
+        ]},
       ],
-      scienceTip: {
-        title: "Why 2 strength sessions?",
-        content: "Research shows that training each muscle group twice per week optimizes muscle protein synthesis. Starting with 2 sessions builds the habit while giving your body adequate recovery time between workouts."
-      }
     };
 
-    // =============================================
-    // PAGE 1: SUMMARY OVERVIEW (LIGHT)
-    // =============================================
+    // ===================== PAGE 1: SUMMARY =====================
     function Page1Summary({ data, onShare }) {
       return (
         <div className="min-h-screen bg-gradient-to-b from-lemon-50 via-warm-50 to-white px-5 pt-16 pb-24">
-          {/* Celebration header */}
           <div className="text-center mb-8 slide-up">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-lemon-400 to-amber-400 rounded-2xl mb-4 shadow-lg shadow-lemon-200">
-              <span className="text-3xl">🍋</span>
+              <span className="text-3xl">&#127819;</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              You crushed it in {data.month}!
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">You crushed it in {data.month}!</h1>
             <p className="text-gray-500">Here's what that looked like</p>
           </div>
-
-          {/* Main stats grid */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <StatCard
-              label="Activities"
-              value={data.stats.activities.value}
-              change={data.stats.activities.change}
-              unit={data.stats.activities.unit}
-              delay={0}
-              large
-            />
-            <StatCard
-              label="Avg Steps"
-              value={data.stats.avgSteps.value.toLocaleString()}
-              change={data.stats.avgSteps.change}
-              unit={data.stats.avgSteps.unit}
-              delay={1}
-              large
-            />
-            <StatCard
-              label="Best Streak"
-              value={data.stats.streak.value}
-              unit={data.stats.streak.unit}
-              icon="Flame"
-              delay={2}
-            />
-            <StatCard
-              label="Active Days"
-              value={data.stats.activeDays.value}
-              change={data.stats.activeDays.change}
-              unit={data.stats.activeDays.unit}
-              delay={3}
-            />
+            <StatCard label="Activities" value={data.stats.activities.value} change={data.stats.activities.change} unit="" delay={0} large />
+            <StatCard label="Avg Steps" value={data.stats.avgSteps.value.toLocaleString()} change={data.stats.avgSteps.change} unit="/day" delay={1} large />
+            <StatCard label="Best Streak" value={data.stats.streak.value} unit="days" icon="Flame" delay={2} />
+            <StatCard label="Active Days" value={data.stats.activeDays.value} change={data.stats.activeDays.change} unit="of 31" delay={3} />
           </div>
-
-          {/* Activity calendar heatmap */}
           <div className="bg-white rounded-2xl p-4 mb-6 border border-gray-100 shadow-sm slide-up-delay-3">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-gray-700">Activity heatmap</span>
@@ -255,22 +219,13 @@
             </div>
             <ActivityHeatmap />
           </div>
-
-          {/* Achievements */}
           <div className="slide-up-delay-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-gray-800">Achievements unlocked</span>
-              <button
-                onClick={onShare}
-                className="flex items-center gap-1.5 text-xs text-sage-600 font-medium"
-              >
-                <Icons.Share /> Share
-              </button>
+              <button onClick={onShare} className="flex items-center gap-1.5 text-xs text-sage-600 font-medium"><Icons.Share /> Share</button>
             </div>
             <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-5 px-5 pb-2">
-              {data.achievements.map((achievement, idx) => (
-                <AchievementBadge key={achievement.id} achievement={achievement} delay={idx} />
-              ))}
+              {data.achievements.map((a, i) => <AchievementBadge key={a.id} achievement={a} delay={i} />)}
             </div>
           </div>
         </div>
@@ -278,25 +233,20 @@
     }
 
     function StatCard({ label, value, change, unit, icon, delay, large }) {
-      const IconComponent = icon ? Icons[icon] : null;
-      const isPositive = change > 0;
-
+      const IC = icon ? Icons[icon] : null;
+      const pos = change > 0;
       return (
         <div className={`bg-white rounded-2xl p-4 border border-gray-100 shadow-sm pop-delay-${delay}`}>
           <p className="text-xs text-gray-500 mb-2">{label}</p>
           <div className="flex items-end gap-2">
-            {IconComponent && (
-              <span className="text-amber-500 mb-1"><IconComponent /></span>
-            )}
-            <span className={`font-bold text-gray-800 number-pop ${large ? 'text-3xl' : 'text-2xl'}`}>
-              {value}
-            </span>
+            {IC && <span className="text-amber-500 mb-1"><IC /></span>}
+            <span className={`font-bold text-gray-800 number-pop ${large ? 'text-3xl' : 'text-2xl'}`}>{value}</span>
             {unit && <span className="text-gray-400 text-sm mb-1">{unit}</span>}
           </div>
           {change !== undefined && change !== 0 && (
-            <div className={`flex items-center gap-1 mt-2 ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
-              {isPositive ? <Icons.TrendingUp /> : <Icons.TrendingDown />}
-              <span className="text-xs font-medium">{isPositive ? '+' : ''}{change}% vs last month</span>
+            <div className={`flex items-center gap-1 mt-2 ${pos ? 'text-green-600' : 'text-red-500'}`}>
+              {pos ? <Icons.TrendingUp /> : <Icons.TrendingDown />}
+              <span className="text-xs font-medium">{pos ? '+' : ''}{change}% vs last month</span>
             </div>
           )}
         </div>
@@ -304,313 +254,206 @@
     }
 
     function ActivityHeatmap() {
-      const days = Array.from({ length: 31 }, (_, i) => ({
-        day: i + 1,
-        level: Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 1 : 0
-      }));
-
-      const getColor = (level) => {
-        const colors = ['bg-gray-100', 'bg-sage-100', 'bg-sage-200', 'bg-sage-300', 'bg-sage-400'];
-        return colors[level] || colors[0];
-      };
-
+      const [days] = useState(() => Array.from({ length: 31 }, (_, i) => ({ day: i + 1, level: Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 1 : 0 })));
+      const c = ['bg-gray-100','bg-sage-100','bg-sage-200','bg-sage-300','bg-sage-400'];
       return (
         <div className="grid grid-cols-7 gap-1.5">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-            <div key={i} className="text-center text-xs text-gray-400 mb-1">{d}</div>
-          ))}
-          {[...Array(3)].map((_, i) => <div key={`empty-${i}`} />)}
-          {days.map((day) => (
-            <div
-              key={day.day}
-              className={`aspect-square rounded-sm ${getColor(day.level)}`}
-            />
-          ))}
+          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} className="text-center text-xs text-gray-400 mb-1">{d}</div>)}
+          {[...Array(3)].map((_,i) => <div key={`e${i}`} />)}
+          {days.map(d => <div key={d.day} className={`aspect-square rounded-sm ${c[d.level]||c[0]}`} />)}
         </div>
       );
     }
 
     function AchievementBadge({ achievement, delay }) {
-      const IconComponent = Icons[achievement.icon];
+      const IC = Icons[achievement.icon];
       return (
         <div className={`flex-shrink-0 bg-gradient-to-br from-lemon-50 to-amber-50 rounded-2xl p-4 border border-lemon-200 pop-delay-${delay}`}>
-          <div className="w-12 h-12 bg-gradient-to-br from-lemon-400 to-amber-400 rounded-xl flex items-center justify-center mb-2 shadow-sm">
-            <span className="text-white"><IconComponent /></span>
-          </div>
+          <div className="w-12 h-12 bg-gradient-to-br from-lemon-400 to-amber-400 rounded-xl flex items-center justify-center mb-2 shadow-sm"><span className="text-white"><IC /></span></div>
           <p className="text-gray-800 text-sm font-medium whitespace-nowrap">{achievement.label}</p>
         </div>
       );
     }
 
-    // =============================================
-    // PAGE 2: GOAL PROGRESS (LIGHT)
-    // =============================================
+    // ===================== PAGE 2: GOALS =====================
     function Page2Progress({ data }) {
-      const [expandedGoal, setExpandedGoal] = useState(null);
-
       return (
         <div className="min-h-screen bg-gradient-to-b from-sage-50 via-warm-50 to-white px-5 pt-16 pb-24">
           <div className="mb-6 slide-up">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Your goals in {data.month}</h1>
             <p className="text-gray-500">Progress and insights based on your data</p>
           </div>
-
           <div className="space-y-3">
-            {data.goals.map((goal, idx) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                expanded={expandedGoal === goal.id}
-                onToggle={() => setExpandedGoal(expandedGoal === goal.id ? null : goal.id)}
-                delay={idx}
-              />
-            ))}
+            {data.goals.map((g, i) => <GoalCard key={g.id} goal={g} delay={i} />)}
           </div>
         </div>
       );
     }
 
-    function GoalCard({ goal, expanded, onToggle, delay }) {
-      const IconComponent = Icons[goal.icon];
-
-      const statusColors = {
-        'on-track': 'bg-green-100 text-green-700 border-green-200',
-        'improving': 'bg-blue-100 text-blue-700 border-blue-200',
-        'steady': 'bg-gray-100 text-gray-600 border-gray-200',
-        'needs-attention': 'bg-amber-100 text-amber-700 border-amber-200',
-      };
-
-      const progressColors = {
-        'on-track': 'bg-green-500',
-        'improving': 'bg-blue-500',
-        'steady': 'bg-gray-400',
-        'needs-attention': 'bg-amber-500',
-      };
-
-      const iconBgColors = {
-        'on-track': 'bg-green-100 text-green-600',
-        'improving': 'bg-blue-100 text-blue-600',
-        'steady': 'bg-gray-100 text-gray-600',
-        'needs-attention': 'bg-amber-100 text-amber-600',
-      };
-
+    function GoalCard({ goal, delay }) {
+      const IC = Icons[goal.icon];
+      const sc = { 'on-track':'bg-green-100 text-green-700 border-green-200','improving':'bg-blue-100 text-blue-700 border-blue-200','needs-attention':'bg-amber-100 text-amber-700 border-amber-200' };
+      const pc = { 'on-track':'bg-green-500','improving':'bg-blue-500','needs-attention':'bg-amber-500' };
+      const ic = { 'on-track':'bg-green-100 text-green-600','improving':'bg-blue-100 text-blue-600','needs-attention':'bg-amber-100 text-amber-600' };
       return (
-        <div className={`bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm slide-up-delay-${Math.min(delay, 4)}`}>
-          <button
-            onClick={onToggle}
-            className="w-full p-4 flex items-center gap-3 text-left"
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBgColors[goal.status]}`}>
-              <IconComponent />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-gray-800 font-medium">{goal.name}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[goal.status]}`}>
-                  {goal.statusLabel}
-                </span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${progressColors[goal.status]} transition-all duration-500`}
-                  style={{ width: `${goal.progress}%` }}
-                />
-              </div>
-            </div>
-            <span className={`text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}>
-              <Icons.ChevronRight />
-            </span>
-          </button>
-
-          {expanded && (
-            <div className="px-4 pb-4 pt-0 fade-in">
-              <div className="bg-gray-50 rounded-xl p-4 mb-3">
-                <p className="text-gray-700 text-sm leading-relaxed">{goal.insight}</p>
-              </div>
-
-              <div className="flex items-start gap-2 bg-sage-50 rounded-xl p-3 border border-sage-100">
-                <span className="text-sage-500 mt-0.5"><Icons.Sparkles /></span>
-                <div>
-                  <p className="text-xs text-sage-600 font-medium mb-1">Science insight</p>
-                  <p className="text-xs text-gray-600 leading-relaxed">{goal.scienceFact}</p>
+        <div className={`bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm slide-up-delay-${Math.min(delay,4)}`}>
+          <div className="p-4">
+            <div className="flex items-start gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ic[goal.status]}`}><IC /></div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-gray-800 font-medium">{goal.name}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${sc[goal.status]}`}>{goal.statusLabel}</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${pc[goal.status]}`} style={{width:`${goal.progress}%`}} />
                 </div>
               </div>
             </div>
-          )}
+            <div className="bg-gray-50 rounded-xl p-4 mb-3"><p className="text-gray-700 text-sm leading-relaxed">{goal.insight}</p></div>
+            <div className="flex items-start gap-2 bg-sage-50 rounded-xl p-3 border border-sage-100">
+              <span className="text-sage-500 mt-0.5"><Icons.Sparkles /></span>
+              <div><p className="text-xs text-sage-600 font-medium mb-1">Science insight</p><p className="text-xs text-gray-600 leading-relaxed">{goal.scienceFact}</p></div>
+            </div>
+          </div>
         </div>
       );
     }
 
-    // =============================================
-    // PAGE 3: INSPIRATION (LIGHT)
-    // =============================================
-    function Page3Inspiration({ data, onViewPlan }) {
+    // ===================== PAGE 3: FRESH INSPIRATION + PLAN OVERVIEW + PREFERENCES =====================
+    function Page3Inspiration({ data, plan, onContinue }) {
+      const [planResponse, setPlanResponse] = useState(null);
+      const [selectedContexts, setSelectedContexts] = useState([]);
+      const [injuryDetails, setInjuryDetails] = useState('');
+      const [otherNotes, setOtherNotes] = useState('');
+      const ctxOpts = [
+        { id: 'injury', label: 'I have an injury' },
+        { id: 'traveling', label: 'Traveling soon' },
+        { id: 'noGym', label: 'No gym access' },
+        { id: 'limitedTime', label: 'Limited time' },
+      ];
+      const toggle = id => setSelectedContexts(p => p.includes(id) ? p.filter(c => c !== id) : [...p, id]);
+
       return (
         <div className="min-h-screen bg-gradient-to-b from-sage-50 via-warm-50 to-white px-5 pt-16 pb-24">
+          {/* Fresh inspiration header */}
           <div className="mb-6 slide-up">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-sage-100 rounded-xl mb-4">
               <span className="text-sage-500"><Icons.Sparkles /></span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              Fresh inspiration for {data.nextMonth}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Fresh inspiration for {data.nextMonth}</h1>
           </div>
 
-          {/* Main encouragement */}
+          {/* Encouragement message */}
           <div className="bg-gradient-to-br from-sage-100 to-sage-50 rounded-2xl p-5 mb-6 border border-sage-200 slide-up-delay-1">
             <p className="text-gray-700 leading-relaxed">{data.inspiration.message}</p>
           </div>
 
           {/* Goal-specific tips */}
-          <div className="space-y-3 mb-8">
-            {data.inspiration.tips.map((tip, idx) => (
-              <TipCard key={idx} tip={tip} delay={idx + 2} />
-            ))}
+          <div className="space-y-3 mb-6">
+            {data.inspiration.tips.map((tip, idx) => {
+              const TipIcon = Icons[tip.icon];
+              return (
+                <div key={idx} className={`bg-white rounded-2xl p-4 border border-gray-100 shadow-sm slide-up-delay-${Math.min(idx+2,4)}`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 flex-shrink-0"><TipIcon /></div>
+                    <div>
+                      <p className="text-gray-800 font-medium text-sm mb-1">{tip.goal}</p>
+                      <p className="text-gray-500 text-sm leading-relaxed">{tip.tip}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* CTA */}
-          <div className="slide-up-delay-4">
-            <button
-              onClick={onViewPlan}
-              className="w-full py-4 bg-sage-500 text-white rounded-2xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-sage-200"
-            >
-              See your {data.nextMonth} plan <Icons.ArrowRight />
-            </button>
-            <p className="text-center text-gray-400 text-xs mt-3">
-              Personalized based on your January data
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    function TipCard({ tip, delay }) {
-      const IconComponent = Icons[tip.icon];
-
-      return (
-        <div className={`bg-white rounded-2xl p-4 border border-gray-100 shadow-sm slide-up-delay-${Math.min(delay, 4)}`}>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 flex-shrink-0">
-              <IconComponent />
+          {/* Plan summary card */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-5 slide-up-delay-3">
+            <p className="font-semibold text-gray-800 mb-1">Does this direction sound right?</p>
+            <p className="text-xs text-gray-500 mb-4">We'll build your personalized plan based on your input</p>
+            <div className="flex gap-3 mb-4">
+              <button onClick={() => setPlanResponse('good')}
+                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  planResponse === 'good' ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm' : 'bg-gray-50 text-gray-600 border-2 border-transparent hover:bg-gray-100'
+                }`}>
+                <Icons.ThumbsUp /> Looks great
+              </button>
+              <button onClick={() => setPlanResponse('adjust')}
+                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  planResponse === 'adjust' ? 'bg-amber-100 text-amber-700 border-2 border-amber-300 shadow-sm' : 'bg-gray-50 text-gray-600 border-2 border-transparent hover:bg-gray-100'
+                }`}>
+                <Icons.MessageCircle /> I need to adjust
+              </button>
             </div>
             <div>
-              <p className="text-gray-800 font-medium text-sm mb-1">{tip.goal}</p>
-              <p className="text-gray-500 text-sm leading-relaxed">{tip.tip}</p>
+              <p className="text-xs font-medium text-gray-600 mb-3">Anything we should keep in mind?</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {ctxOpts.map(o => (
+                  <button key={o.id} onClick={() => toggle(o.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedContexts.includes(o.id) ? 'bg-sage-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    {selectedContexts.includes(o.id) ? '\u2713 ' : ''}{o.label}
+                  </button>
+                ))}
+              </div>
+              {selectedContexts.includes('injury') && (
+                <input type="text" placeholder="Tell us about your injury..." value={injuryDetails} onChange={e => setInjuryDetails(e.target.value)}
+                  className="w-full mb-3 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-sage-400" />
+              )}
+              <textarea placeholder="Any other notes? (optional)" value={otherNotes} onChange={e => setOtherNotes(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-sage-400 resize-none" rows={2} />
             </div>
           </div>
+
+          {selectedContexts.length > 0 && (
+            <p className="text-center text-sage-600 text-xs mb-4 fade-in">
+              Your plan will adapt for: {selectedContexts.map(c => ctxOpts.find(o => o.id === c)?.label).join(', ')}
+            </p>
+          )}
+
+          <button onClick={onContinue}
+            className={`w-full py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 shadow-lg transition-all ${
+              planResponse ? 'bg-sage-500 text-white shadow-sage-200' : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+            }`} disabled={!planResponse}>
+            See your {data.nextMonth} plan <Icons.ArrowRight />
+          </button>
+          {!planResponse && <p className="text-center text-gray-400 text-xs mt-3">Let us know if this direction works first</p>}
         </div>
       );
     }
 
-    // =============================================
-    // PAGE 4: PERSONALIZED PLAN
-    // =============================================
-    function Page4PersonalizedPlan({ plan, onBack }) {
+    // ===================== PAGE 4: YOUR PERSONALIZED PLAN (editable targets) =====================
+    function Page4Plan({ plan, onContinue }) {
+      const [targets, setTargets] = useState(() => plan.weeklyTargets.map(t => ({ ...t })));
+      const [editingTarget, setEditingTarget] = useState(null);
+
+      const adjustTarget = (idx, delta) => {
+        setTargets(prev => prev.map((t, i) => {
+          if (i !== idx) return t;
+          const step = t.step || 1;
+          const newVal = Math.max(t.min, Math.min(t.max, t.target + delta * step));
+          return { ...t, target: newVal, display: t.step === 500 ? newVal.toLocaleString() : undefined };
+        }));
+      };
+
+      const displayTarget = (t) => {
+        if (t.label.includes('steps')) return t.target.toLocaleString();
+        if (t.label.includes('Sleep')) return `${t.target} nights`;
+        return t.target;
+      };
+
       return (
         <div className="min-h-screen bg-gradient-to-b from-warm-50 to-white px-5 pt-16 pb-24">
-          {/* Header */}
           <div className="mb-6 slide-up">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sage-500"><Icons.Calendar /></span>
               <span className="text-sm text-sage-600 font-medium">{plan.month} Plan</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              Your personalized plan
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Your personalized plan</h1>
             <p className="text-gray-500">Based on your January progress and goals</p>
           </div>
 
-          {/* Focus Areas */}
-          <div className="mb-6 slide-up-delay-1">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Priority focus areas</h2>
-            <div className="flex gap-3">
-              {plan.focusAreas.map(area => {
-                const IconComponent = Icons[area.icon];
-                return (
-                  <div
-                    key={area.id}
-                    className={`flex-1 p-4 rounded-2xl border ${
-                      area.priority === 'high'
-                        ? 'bg-amber-50 border-amber-200'
-                        : 'bg-blue-50 border-blue-200'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${
-                      area.priority === 'high'
-                        ? 'bg-amber-100 text-amber-600'
-                        : 'bg-blue-100 text-blue-600'
-                    }`}>
-                      <IconComponent />
-                    </div>
-                    <p className="font-medium text-gray-800 text-sm">{area.name}</p>
-                    <p className={`text-xs ${area.priority === 'high' ? 'text-amber-600' : 'text-blue-600'}`}>
-                      {area.priority === 'high' ? 'Top priority' : 'Keep momentum'}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Weekly Targets */}
-          <div className="mb-6 slide-up-delay-2">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Weekly targets</h2>
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              {plan.weeklyTargets.map((target, idx) => {
-                const IconComponent = Icons[target.icon];
-                return (
-                  <div
-                    key={idx}
-                    className={`flex items-center gap-3 p-4 ${idx !== plan.weeklyTargets.length - 1 ? 'border-b border-gray-50' : ''}`}
-                  >
-                    <div className="w-8 h-8 bg-sage-100 rounded-lg flex items-center justify-center text-sage-600">
-                      <IconComponent />
-                    </div>
-                    <span className="flex-1 text-gray-700 text-sm">{target.label}</span>
-                    <span className="text-sage-600 font-semibold">{target.target}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Starter Plan */}
-          <div className="mb-6 slide-up-delay-3">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Your starter week</h2>
-            <div className="space-y-3">
-              {plan.starterPlan.map((day, dayIdx) => (
-                <div key={dayIdx} className="bg-white rounded-2xl border border-gray-100 p-4">
-                  <p className="font-semibold text-gray-800 mb-3">{day.day}</p>
-                  <div className="space-y-2">
-                    {day.activities.map((activity, actIdx) => {
-                      const IconComponent = Icons[activity.icon];
-                      return (
-                        <div key={actIdx} className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            activity.isNew ? 'bg-lemon-100 text-amber-600' : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            <IconComponent />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-800">{activity.title}</span>
-                              {activity.isNew && (
-                                <span className="text-xs bg-lemon-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">New</span>
-                              )}
-                            </div>
-                            <span className="text-xs text-gray-400">{activity.time}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Science Tip */}
-          <div className="bg-sage-50 rounded-2xl p-4 border border-sage-100 mb-6 slide-up-delay-4">
+          {/* Science insight at top */}
+          <div className="bg-sage-50 rounded-2xl p-4 border border-sage-100 mb-6 slide-up-delay-1">
             <div className="flex items-start gap-3">
               <span className="text-sage-500 mt-0.5"><Icons.Sparkles /></span>
               <div>
@@ -620,169 +463,295 @@
             </div>
           </div>
 
-          {/* CTA */}
-          <button className="w-full py-4 bg-sage-500 text-white rounded-2xl font-semibold shadow-lg shadow-sage-200">
-            Start {plan.month}
+          {/* Editable Weekly Targets */}
+          <div className="mb-6 slide-up-delay-2">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-700">Weekly targets</h2>
+              <span className="text-xs text-gray-400">Tap to adjust</span>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              {targets.map((t, idx) => {
+                const TI = Icons[t.icon];
+                const isEditing = editingTarget === idx;
+                return (
+                  <div key={idx} className={`p-3.5 ${idx !== targets.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-sage-100 rounded-lg flex items-center justify-center text-sage-600"><TI /></div>
+                      <span className="flex-1 text-gray-700 text-sm">{t.label}</span>
+                      <button onClick={() => setEditingTarget(isEditing ? null : idx)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                          isEditing ? 'bg-sage-100 text-sage-700' : 'text-sage-600 hover:bg-gray-50'
+                        }`}>
+                        {displayTarget(t)}
+                        <span className="text-gray-400"><Icons.Edit /></span>
+                      </button>
+                    </div>
+                    {isEditing && (
+                      <div className="flex items-center justify-end gap-3 mt-3 fade-in">
+                        <button onClick={() => adjustTarget(idx, -1)}
+                          className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors">
+                          <Icons.Minus />
+                        </button>
+                        <span className="text-lg font-bold text-gray-800 min-w-[60px] text-center">{displayTarget(t)}</span>
+                        <button onClick={() => adjustTarget(idx, 1)}
+                          className="w-9 h-9 rounded-lg bg-sage-100 flex items-center justify-center text-sage-600 hover:bg-sage-200 transition-colors">
+                          <Icons.Plus />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4-week journey at a glance */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 slide-up-delay-3">
+            <h3 className="font-semibold text-gray-800 text-sm mb-4">Your 4-week journey</h3>
+            <div className="space-y-3">
+              {plan.weeks.map(w => (
+                <div key={w.weekNum} className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                    w.weekNum === 1 ? 'bg-sage-100 text-sage-600' : w.weekNum === 2 ? 'bg-sage-200 text-sage-600' : w.weekNum === 3 ? 'bg-sage-300 text-sage-700' : 'bg-sage-100 text-sage-600'
+                  }`}>{w.weekNum}</div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">{w.title.split(': ')[1]}</p>
+                    <p className="text-xs text-gray-400">{w.theme}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA to commit page */}
+          <button onClick={onContinue}
+            className="w-full py-4 bg-sage-500 text-white rounded-2xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-sage-200 hover:bg-sage-600 transition-colors slide-up-delay-4">
+            I'm happy with this plan <Icons.ArrowRight />
           </button>
+          <p className="text-center text-gray-400 text-xs mt-3">Personalized based on your January data</p>
         </div>
       );
     }
 
-    // =============================================
-    // SHARE MODAL (LIGHT)
-    // =============================================
-    function ShareModal({ data, onClose }) {
-      const [selectedAchievement, setSelectedAchievement] = useState(data.achievements[0]?.id);
+    // ===================== PAGE 5: READY TO COMMIT =====================
+    function Page5Commit({ plan }) {
+      const [committed, setCommitted] = useState(false);
+      const [reminders, setReminders] = useState({ daily: false, weekly: true });
+      const [activeWeek, setActiveWeek] = useState(1);
+      const currentWeek = plan.weeks.find(w => w.weekNum === activeWeek);
 
       return (
+        <div className="min-h-screen bg-gradient-to-b from-lemon-50 via-warm-50 to-white px-5 pt-16 pb-24">
+          {!committed ? (
+            <>
+              <div className="text-center mb-8 slide-up">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-sage-400 to-sage-500 rounded-2xl mb-4 shadow-lg shadow-sage-200">
+                  <span className="text-white"><Icons.Check /></span>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Ready to commit?</h1>
+                <p className="text-gray-500">Lock in your {plan.month} plan and start strong</p>
+              </div>
+
+              {/* What you're signing up for */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-5 slide-up-delay-1">
+                <h3 className="font-semibold text-gray-800 text-sm mb-4">Your {plan.month} commitment</h3>
+                <div className="space-y-3">
+                  {plan.weeklyTargets.map((t, i) => {
+                    const TI = Icons[t.icon];
+                    const disp = t.label.includes('steps') ? t.target.toLocaleString() : t.label.includes('Sleep') ? `${t.target} nights` : t.target;
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-sage-100 rounded-lg flex items-center justify-center text-sage-600"><TI /></div>
+                        <span className="flex-1 text-sm text-gray-700">{t.label}</span>
+                        <span className="text-sm font-bold text-sage-600">{disp}<span className="text-gray-400 font-normal">/wk</span></span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Your starter week */}
+              <div className="mb-5 slide-up-delay-2">
+                <h3 className="font-semibold text-gray-800 text-sm mb-3">Your starter week</h3>
+                <div className="flex gap-2 mb-4 overflow-x-auto hide-scrollbar">
+                  {plan.weeks.map(w => (
+                    <button key={w.weekNum} onClick={() => setActiveWeek(w.weekNum)}
+                      className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                        activeWeek === w.weekNum ? 'bg-sage-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}>Week {w.weekNum}</button>
+                  ))}
+                </div>
+                {currentWeek && (
+                  <div className="fade-in" key={activeWeek}>
+                    <p className="text-xs text-gray-500 mb-3">{currentWeek.title} &mdash; {currentWeek.theme}</p>
+                    <div className="space-y-3">
+                      {currentWeek.activities.map((day, dIdx) => (
+                        <div key={dIdx} className="bg-white rounded-2xl border border-gray-100 p-4">
+                          <p className="font-semibold text-gray-800 mb-3 text-sm">{day.day}</p>
+                          <div className="space-y-2.5">
+                            {day.activities.map((a, aIdx) => {
+                              const AI = Icons[a.icon];
+                              return (
+                                <div key={aIdx} className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${a.isNew ? 'bg-lemon-100 text-amber-600' : 'bg-gray-100 text-gray-500'}`}><AI /></div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-gray-800">{a.title}</span>
+                                      {a.isNew && <span className="text-xs bg-lemon-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">New</span>}
+                                    </div>
+                                    <span className="text-xs text-gray-400">{a.time}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reminder preferences */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 slide-up-delay-3">
+                <h3 className="font-semibold text-gray-800 text-sm mb-4">Reminder preferences</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-6 rounded-full relative transition-colors cursor-pointer ${reminders.daily ? 'bg-sage-500' : 'bg-gray-300'}`}
+                      onClick={() => setReminders(r => ({...r, daily: !r.daily}))}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${reminders.daily ? 'left-6' : 'left-1'}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-700">Daily reminders</p>
+                      <p className="text-xs text-gray-400">Gentle nudges before each activity</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-6 rounded-full relative transition-colors cursor-pointer ${reminders.weekly ? 'bg-sage-500' : 'bg-gray-300'}`}
+                      onClick={() => setReminders(r => ({...r, weekly: !r.weekly}))}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${reminders.weekly ? 'left-6' : 'left-1'}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-700">Weekly check-ins</p>
+                      <p className="text-xs text-gray-400">Progress summary every Sunday</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Commit CTA */}
+              <button onClick={() => setCommitted(true)}
+                className="w-full py-4 bg-sage-500 text-white rounded-2xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-sage-200 hover:bg-sage-600 transition-colors slide-up-delay-4">
+                I'm in! Start {plan.month} <Icons.ArrowRight />
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center min-h-[70vh]">
+              <div className="celebrate-bounce text-center">
+                <div className="text-6xl mb-4">&#127881;</div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-3">You're all set!</h2>
+                <p className="text-gray-600 mb-1">Your {plan.month} plan is locked in.</p>
+                <p className="text-sm text-gray-400 mb-6">
+                  {reminders.daily && reminders.weekly ? "Daily reminders + weekly check-ins activated."
+                    : reminders.daily ? "Daily reminders activated."
+                    : reminders.weekly ? "Weekly check-ins activated."
+                    : "No reminders \u2014 you've got this!"}
+                </p>
+                <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-5 py-2.5 rounded-full text-sm font-medium">
+                  <Icons.Check /> Plan activated
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===================== SHARE MODAL =====================
+    function ShareModal({ data, onClose }) {
+      const [sel, setSel] = useState(data.achievements[0]?.id);
+      return (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 fade-in" onClick={onClose}>
-          <div
-            className="bg-white rounded-t-3xl w-full max-w-md p-5 pb-8 slide-up"
-            onClick={e => e.stopPropagation()}
-          >
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-5 pb-8 slide-up" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-800">Share your progress</h3>
               <button onClick={onClose} className="text-gray-400"><Icons.X /></button>
             </div>
-
-            {/* Preview card */}
             <div className="bg-gradient-to-br from-lemon-50 to-amber-50 rounded-2xl p-5 mb-6 border border-lemon-200">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-sage-500"><Icons.Leaf /></span>
-                <span className="text-gray-800 font-medium">Lemon</span>
-              </div>
+              <div className="flex items-center gap-2 mb-4"><span className="text-sage-500"><Icons.Leaf /></span><span className="text-gray-800 font-medium">Lemon</span></div>
               <div className="text-center py-4">
-                <div className="text-4xl mb-2">🔥</div>
+                <div className="text-4xl mb-2">&#128293;</div>
                 <p className="text-3xl font-bold gradient-text mb-1">14 Day Streak!</p>
                 <p className="text-gray-500 text-sm">Building healthy habits in {data.month}</p>
               </div>
             </div>
-
-            {/* Achievement selector */}
             <div className="flex gap-2 mb-6 overflow-x-auto hide-scrollbar">
-              {data.achievements.map(achievement => (
-                <button
-                  key={achievement.id}
-                  onClick={() => setSelectedAchievement(achievement.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedAchievement === achievement.id
-                      ? 'bg-sage-500 text-white'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {achievement.label}
-                </button>
+              {data.achievements.map(a => (
+                <button key={a.id} onClick={() => setSel(a.id)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${sel === a.id ? 'bg-sage-500 text-white' : 'bg-gray-100 text-gray-600'}`}>{a.label}</button>
               ))}
             </div>
-
-            {/* Share buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="py-3 bg-gray-100 rounded-xl text-gray-800 font-medium flex items-center justify-center gap-2">
-                <span className="text-lg">📱</span> Stories
-              </button>
-              <button className="py-3 bg-gray-100 rounded-xl text-gray-800 font-medium flex items-center justify-center gap-2">
-                <span className="text-lg">💬</span> Message
-              </button>
+              <button className="py-3 bg-gray-100 rounded-xl text-gray-800 font-medium flex items-center justify-center gap-2"><span>&#128241;</span> Stories</button>
+              <button className="py-3 bg-gray-100 rounded-xl text-gray-800 font-medium flex items-center justify-center gap-2"><span>&#128172;</span> Message</button>
             </div>
           </div>
         </div>
       );
     }
 
-    // =============================================
-    // MAIN APP
-    // =============================================
+    // ===================== MAIN APP =====================
     function App() {
-      const [currentPage, setCurrentPage] = useState(1);
+      const [page, setPage] = useState(1);
       const [showShare, setShowShare] = useState(false);
-
-      const totalPages = 4;
-
-      const nextPage = () => {
-        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-      };
-
-      const prevPage = () => {
-        if (currentPage > 1) setCurrentPage(currentPage - 1);
-      };
+      const total = 5;
+      const next = () => { if (page < total) setPage(page + 1); };
+      const prev = () => { if (page > 1) setPage(page - 1); };
 
       return (
         <div className="max-w-md mx-auto relative min-h-screen">
-          {/* Header */}
+          {/* Header nav */}
           <div className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto">
             <div className="flex items-center justify-between px-5 pt-4 pb-2 bg-gradient-to-b from-white to-transparent">
-              <button className="text-gray-400 w-8" onClick={() => currentPage > 1 ? prevPage() : null}>
-                {currentPage > 1 ? <Icons.ChevronLeft /> : <Icons.X />}
+              <button className="text-gray-400 w-8" onClick={() => page > 1 ? prev() : null}>
+                {page > 1 ? <Icons.ChevronLeft /> : <Icons.X />}
               </button>
-
-              {/* Page indicators */}
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      currentPage === page ? 'w-6 bg-sage-500' : 'w-1.5 bg-gray-300'
-                    }`}
-                  />
+              <div className="flex gap-1.5">
+                {[1,2,3,4,5].map(p => (
+                  <button key={p} onClick={() => setPage(p)}
+                    className={`h-1.5 rounded-full transition-all ${page === p ? 'w-5 bg-sage-500' : 'w-1.5 bg-gray-300'}`} />
                 ))}
               </div>
-
-              <button
-                onClick={() => setShowShare(true)}
-                className="text-gray-400 w-8"
-              >
-                <Icons.Share />
-              </button>
+              <button onClick={() => setShowShare(true)} className="text-gray-400 w-8"><Icons.Share /></button>
             </div>
           </div>
 
           {/* Pages */}
-          <div className="fade-in" key={currentPage}>
-            {currentPage === 1 && (
-              <Page1Summary data={SUMMARY_DATA} onShare={() => setShowShare(true)} />
-            )}
-            {currentPage === 2 && (
-              <Page2Progress data={SUMMARY_DATA} />
-            )}
-            {currentPage === 3 && (
-              <Page3Inspiration data={SUMMARY_DATA} onViewPlan={nextPage} />
-            )}
-            {currentPage === 4 && (
-              <Page4PersonalizedPlan plan={PERSONALIZED_PLAN} onBack={prevPage} />
-            )}
+          <div className="fade-in" key={page}>
+            {page === 1 && <Page1Summary data={SUMMARY_DATA} onShare={() => setShowShare(true)} />}
+            {page === 2 && <Page2Progress data={SUMMARY_DATA} />}
+            {page === 3 && <Page3Inspiration data={SUMMARY_DATA} plan={PERSONALIZED_PLAN} onContinue={next} />}
+            {page === 4 && <Page4Plan plan={PERSONALIZED_PLAN} onContinue={next} />}
+            {page === 5 && <Page5Commit plan={PERSONALIZED_PLAN} />}
           </div>
 
-          {/* Navigation */}
-          {currentPage < 4 && (
+          {/* Bottom nav (pages 1-4 only, not on commit page) */}
+          {page < 5 && (
             <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto">
               <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-t from-white via-white/90 to-transparent">
-                <button
-                  onClick={prevPage}
-                  disabled={currentPage === 1}
-                  className={`flex items-center gap-1 text-sm font-medium ${
-                    currentPage === 1 ? 'text-gray-300' : 'text-gray-500'
-                  }`}
-                >
+                <button onClick={prev} disabled={page === 1}
+                  className={`flex items-center gap-1 text-sm font-medium ${page === 1 ? 'text-gray-300' : 'text-gray-500'}`}>
                   <Icons.ChevronLeft /> Back
                 </button>
-
-                <span className="text-gray-400 text-sm">{currentPage} of {totalPages}</span>
-
-                <button
-                  onClick={nextPage}
-                  className="flex items-center gap-1 text-sm font-medium text-sage-600"
-                >
+                <span className="text-gray-400 text-sm">{page} of {total}</span>
+                <button onClick={next} className="flex items-center gap-1 text-sm font-medium text-sage-600">
                   Next <Icons.ChevronRight />
                 </button>
               </div>
             </div>
           )}
 
-          {/* Share Modal */}
-          {showShare && (
-            <ShareModal data={SUMMARY_DATA} onClose={() => setShowShare(false)} />
-          )}
+          {showShare && <ShareModal data={SUMMARY_DATA} onClose={() => setShowShare(false)} />}
         </div>
       );
     }
